@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" android:layout_height="fill_parent">
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/RecipeAddLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+
+        <!-- Title -->
+
+        <TextView
+            android:id="@+id/TitleLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/title_string"
+            android:textAppearance="?android:attr/textAppearanceLarge" >
+        </TextView>
+
+        <EditText
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/TitleLabel"
+            android:layout_marginTop="14dp"
+            android:ems="10"
+            android:hint="@string/enter_title_string"
+            android:inputType="textShortMessage">
+
+            <requestFocus />
+        </EditText>
+
+        <!-- Description -->
+
+        <TextView
+            android:id="@+id/descriptionTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/title"
+            android:layout_marginTop="25dp"
+            android:text="@string/description_string"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <EditText
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/descriptionTitle"
+            android:layout_marginTop="14dp"
+            android:ems="10"
+            android:hint="@string/enter_description_string"
+            android:inputType="textShortMessage">
+        </EditText>
+
+        <!-- Ingredients -->
+
+        <TextView
+            android:id="@+id/ingredientsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/description"
+            android:layout_marginTop="25dp"
+            android:text="@string/ingredients_string"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <EditText
+            android:id="@+id/ingredients"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/ingredientsTitle"
+            android:layout_marginTop="14dp"
+            android:ems="10"
+            android:hint="@string/enter_ingredients_string"
+            android:inputType="textShortMessage">
+        </EditText>
+
+        <!-- Time and Date -->
+
+        <TextView
+            android:id="@+id/time_and_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/ingredients"
+            android:layout_marginTop="25dp"
+            android:text="@string/time_and_date_string"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/time_and_date"
+            android:layout_marginTop="12dp"
+            android:text="@string/no_date_set_string" />
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/time_and_date"
+            android:text="@string/no_time_set_string" />
+
+        <Button
+            android:id="@+id/date_picker_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/date"
+            android:text="@string/choose_date_string" />
+
+        <Button
+            android:id="@+id/time_picker_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignTop="@id/date_picker_button"
+            android:layout_below="@id/time"
+            android:text="@string/choose_time_string" />
+
+        <!-- Buttons -->
+
+        <Button
+            android:id="@+id/cancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/time_picker_button"
+            android:text="@string/cancel_string" />
+
+        <Button
+            android:id="@+id/resetButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/time_picker_button"
+            android:text="@string/reset_string" />
+
+        <Button
+            android:id="@+id/submitButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/time_picker_button"
+            android:text="@string/submit_string" />
+
+    </RelativeLayout>
+</ScrollView><!-- From: file:/C:/Users/Sanggon/AndroidStudioProjects/FoodNote/app/src/main/res/layout/add_recipe.xml -->
