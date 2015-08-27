@@ -2,18 +2,32 @@
 <items version="2" >
 
     <item
-        jar="C:\Users\Sanggon\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-v4\19.1.0\support-v4-19.1.0.jar"
+        jar="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\22.2.1\jars\classes.jar"
         jumboMode="false"
         revision="22.0.1"
-        sha1="85f201b380937e61a9dce6ca90ccf6872abbfb67">
-        <dex dex="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\pre-dexed\debug\support-v4-19.1.0-032919979561743cbc2aece5d4a9bd9475eaab70.jar" />
+        sha1="4486e953d1f35f8ccab098b1dd67146366d5f731">
+        <dex dex="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\pre-dexed\debug\classes-cc0c982d6b04d811c93146f3711794f033f9a862.jar" />
     </item>
     <item
-        jar="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\exploded-aar\com.android.support\appcompat-v7\19.1.0\jars\classes.jar"
+        jar="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\exploded-aar\com.android.support\support-v4\22.2.1\jars\libs\internal_impl-22.2.1.jar"
         jumboMode="false"
         revision="22.0.1"
-        sha1="3499ceba05ca1f6037c6a2fad73df8f636224a28">
-        <dex dex="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\pre-dexed\debug\classes-6541d9680436e61083b7d2bffdcf6d507a6f24ea.jar" />
+        sha1="c471eaaba13ff64f6e0383d1c30a9cdc9a97efeb">
+        <dex dex="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\pre-dexed\debug\internal_impl-22.2.1-bb563cd30feb8ad59bc2254246938829231d4eb9.jar" />
+    </item>
+    <item
+        jar="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\exploded-aar\com.android.support\support-v4\22.2.1\jars\classes.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="f8efd0096475e0daf054267b61544e10dc776503">
+        <dex dex="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\pre-dexed\debug\classes-589c158b0e7dfa3774d3de9fdd1308d1fe270da5.jar" />
+    </item>
+    <item
+        jar="C:\Users\Sanggon\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-annotations\22.2.1\support-annotations-22.2.1.jar"
+        jumboMode="false"
+        revision="22.0.1"
+        sha1="61a0ff5c29295ec56d7e0bd3d25d95dbf71b4b2b">
+        <dex dex="C:\Users\Sanggon\AndroidStudioProjects\FoodNote\app\build\intermediates\pre-dexed\debug\support-annotations-22.2.1-3692671a4675c1cea40f9c065e35586be9b10cdb.jar" />
     </item>
 
 </items>
