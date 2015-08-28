@@ -52,7 +52,7 @@ public class FullscreenActivity extends Activity {
     private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
 
     /**
-     * The instance of the {@link SystemUiHider} for this activity.
+     * The instance of the {@link SystemUiHider} for this activity.!
      */
     private SystemUiHider mSystemUiHider;
 
