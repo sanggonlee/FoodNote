@@ -4,7 +4,7 @@
     <string name="app_name">FoodNote</string>
     <string name="done_string">Done:</string>
     <string name="date_string">Date:</string>
-    <string name="add_new_todo_item_string">Add New ToDo Item</string>
+    <string name="add_new_recipe_string">Add New Recipe</string>
     <string name="title_string">Recipe Title</string>
     <string name="description_string">Recipe Description</string>
     <string name="enter_description_string">Enter description</string>
@@ -23,5 +23,9 @@
     <string name="reset_string">Reset</string>
     <string name="submit_string">Submit</string>
     <string name="enter_title_string">Enter Title</string>
+
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 
 </resources>
