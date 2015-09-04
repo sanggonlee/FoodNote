@@ -3,7 +3,9 @@ package com.example.foodnote;
 import com.example.foodnote.util.SystemUiHider;
 
 import android.annotation.TargetApi;
+import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -11,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -18,8 +21,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -56,8 +63,14 @@ public class FullscreenActivity extends Activity {
      */
     private SystemUiHider mSystemUiHider;
 
+    String TAG = "FullscreenActivity";
+
     RelativeLayout rightRL;
     DrawerLayout drawerLayout;
+
+    EditText mTitleText;
+    EditText mDescription;
+    EditText mIngredients;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +78,10 @@ public class FullscreenActivity extends Activity {
 
         // transparent action bar
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
-        getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+        ActionBar actionBar = getActionBar();
+        actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayUseLogoEnabled(false);
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -133,6 +149,10 @@ public class FullscreenActivity extends Activity {
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         drawerLayout.setScrimColor(Color.parseColor("#DE000000"));
 
+        mTitleText = (EditText) findViewById(R.id.title);
+        mDescription = (EditText) findViewById(R.id.description);
+        mIngredients = (EditText) findViewById(R.id.ingredients);
+
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
@@ -174,6 +194,37 @@ public class FullscreenActivity extends Activity {
 
     public void closeDrawer(View view) {
         drawerLayout.closeDrawer(rightRL);
+    }
+
+    public void onAddRecipeBackgroundClicked(View view) {
+        // Dismiss virtual keyboard. Ugly, but seems to be the simplest way for now..
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+    }
+
+    public void onHideButtonClicked(View view) {
+        drawerLayout.closeDrawer(rightRL);
+    }
+
+    public void onCancelButtonClicked(View view) {
+        clearContents();
+        drawerLayout.closeDrawer(rightRL);
+    }
+
+    private void clearContents() {
+        mTitleText.setText("");
+        mDescription.setText("");
+        mIngredients.setText("");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout.isDrawerOpen(rightRL)) {
+            drawerLayout.closeDrawer(rightRL);
+        } else {
+            // default behaviour
+            finish();
+        }
     }
 
     public void goToList(View view) {
