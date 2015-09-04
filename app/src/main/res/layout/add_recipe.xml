@@ -138,13 +138,13 @@
             android:text="@string/cancel_string" />
 
         <Button
-            android:id="@+id/resetButton"
+            android:id="@+id/hideButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
             android:layout_below="@id/time_picker_button"
-            android:text="@string/reset_string" />
+            android:text="@string/hide_string" />
 
         <Button
             android:id="@+id/submitButton"

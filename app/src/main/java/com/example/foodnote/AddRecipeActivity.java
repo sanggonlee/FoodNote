@@ -89,7 +89,7 @@ public class AddRecipeActivity extends Activity {
 		});
 
 		// Set up OnClickListener for the Reset Button
-		final Button resetButton = (Button) findViewById(R.id.resetButton);
+		final Button resetButton = (Button) findViewById(R.id.hideButton);
 		resetButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
