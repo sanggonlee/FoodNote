@@ -7,6 +7,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -62,6 +63,7 @@ public class FullscreenActivity extends Activity {
      * The instance of the {@link SystemUiHider} for this activity.!
      */
     private SystemUiHider mSystemUiHider;
+    public static final String PREFS = "Writing";
 
     String TAG = "FullscreenActivity";
 
@@ -71,6 +73,10 @@ public class FullscreenActivity extends Activity {
     EditText mTitleText;
     EditText mDescription;
     EditText mIngredients;
+
+    String unsavedTitle;
+    String unsavedDescription;
+    String unsavedIngredients;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +93,20 @@ public class FullscreenActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_fullscreen);
+
+        /** Preferences call from last time before app close    By. CHAN */
+        mTitleText = (EditText)findViewById(R.id.title);
+        mDescription = (EditText)findViewById(R.id.description);
+        mIngredients = (EditText)findViewById(R.id.ingredients);
+
+        SharedPreferences settings = getSharedPreferences(PREFS, 0);
+        unsavedTitle = settings.getString("unsavedTitle", "");
+        unsavedDescription = settings.getString("unsavedDescription", "");
+        unsavedIngredients = settings.getString("unsavedIngredients", "");
+        mTitleText.setText(unsavedTitle);
+        mDescription.setText(unsavedDescription);
+        mIngredients.setText(unsavedIngredients);
+        /***/
 
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
         final View contentView = findViewById(R.id.fullscreen_content);
@@ -262,5 +282,21 @@ public class FullscreenActivity extends Activity {
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    /** Preferences before close app    By. CHAN */
+    @Override
+    protected  void onStop() {
+        super.onStop();
+
+        SharedPreferences settings = getSharedPreferences(PREFS, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        unsavedTitle = mTitleText.getText().toString();
+        unsavedDescription = mDescription.getText().toString();
+        unsavedIngredients = mIngredients.getText().toString();
+        editor.putString("unsavedTitle", unsavedTitle);
+        editor.putString("unsavedDescription", unsavedDescription);
+        editor.putString("unsavedIngredients", unsavedIngredients);
+        editor.commit();
     }
 }
