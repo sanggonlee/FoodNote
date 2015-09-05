@@ -94,20 +94,6 @@ public class FullscreenActivity extends Activity {
 
         setContentView(R.layout.activity_fullscreen);
 
-        /** Preferences call from last time before app close    By. CHAN */
-        mTitleText = (EditText)findViewById(R.id.title);
-        mDescription = (EditText)findViewById(R.id.description);
-        mIngredients = (EditText)findViewById(R.id.ingredients);
-
-        SharedPreferences settings = getSharedPreferences(PREFS, 0);
-        unsavedTitle = settings.getString("unsavedTitle", "");
-        unsavedDescription = settings.getString("unsavedDescription", "");
-        unsavedIngredients = settings.getString("unsavedIngredients", "");
-        mTitleText.setText(unsavedTitle);
-        mDescription.setText(unsavedDescription);
-        mIngredients.setText(unsavedIngredients);
-        /***/
-
         final View controlsView = findViewById(R.id.fullscreen_content_controls);
         final View contentView = findViewById(R.id.fullscreen_content);
 
@@ -169,9 +155,19 @@ public class FullscreenActivity extends Activity {
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         drawerLayout.setScrimColor(Color.parseColor("#DE000000"));
 
-        mTitleText = (EditText) findViewById(R.id.title);
-        mDescription = (EditText) findViewById(R.id.description);
-        mIngredients = (EditText) findViewById(R.id.ingredients);
+        mTitleText = (EditText)findViewById(R.id.title);
+        mDescription = (EditText)findViewById(R.id.description);
+        mIngredients = (EditText)findViewById(R.id.ingredients);
+
+        /** Preferences call from last time before app close    By. CHAN */
+        SharedPreferences settings = getSharedPreferences(PREFS, 0);
+        unsavedTitle = settings.getString("unsavedTitle", "");
+        unsavedDescription = settings.getString("unsavedDescription", "");
+        unsavedIngredients = settings.getString("unsavedIngredients", "");
+        mTitleText.setText(unsavedTitle);
+        mDescription.setText(unsavedDescription);
+        mIngredients.setText(unsavedIngredients);
+        /***/
 
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
@@ -299,4 +295,5 @@ public class FullscreenActivity extends Activity {
         editor.putString("unsavedIngredients", unsavedIngredients);
         editor.commit();
     }
+    /***/
 }
