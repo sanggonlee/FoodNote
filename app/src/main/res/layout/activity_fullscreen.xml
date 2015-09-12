@@ -52,7 +52,7 @@
             <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:id="@+id/RecipeAddLayout"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:clickable="true"
                 android:onClick="onAddRecipeBackgroundClicked">
@@ -71,6 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
                     android:layout_below="@+id/TitleLabel"
                     android:layout_marginTop="14dp"
                     android:paddingLeft="10dp"
@@ -95,6 +96,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
                     android:layout_below="@+id/title"
                     android:layout_marginTop="25dp"
                     android:text="@string/description_string"
@@ -105,6 +107,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
                     android:layout_below="@+id/descriptionTitle"
                     android:layout_marginTop="14dp"
                     android:paddingLeft="10dp"
@@ -127,6 +130,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
                     android:layout_below="@+id/description"
                     android:layout_marginTop="25dp"
                     android:text="@string/ingredients_string"
@@ -137,6 +141,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
                     android:layout_below="@+id/ingredientsTitle"
                     android:layout_marginTop="14dp"
                     android:paddingLeft="10dp"
@@ -152,6 +157,27 @@
                     android:textAppearance="?android:attr/textAppearanceLarge">
                 </EditText>
 
+                <!-- Steps -->
+
+                <TextView
+                    android:id="@+id/stepsTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/ingredients"
+                    android:layout_marginTop="25dp"
+                    android:text="@string/steps_string"
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                <ListView
+                    android:id="@+id/addStepsList"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_below="@+id/stepsTitle"
+                    android:divider="@null"
+                    android:dividerHeight="0dp" />
+
                 <!-- Buttons -->
 
                 <Button
@@ -161,7 +187,10 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentLeft="true"
-                    android:layout_below="@id/ingredients"
+                    android:layout_alignParentStart="true"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:layout_below="@id/addStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/hide_string"
@@ -174,7 +203,9 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentBottom="true"
                     android:layout_centerHorizontal="true"
-                    android:layout_below="@id/ingredients"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:layout_below="@id/addStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/cancel_string"
@@ -187,7 +218,10 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentRight="true"
-                    android:layout_below="@id/ingredients"
+                    android:layout_alignParentEnd="true"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:layout_below="@id/addStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/submit_string" />

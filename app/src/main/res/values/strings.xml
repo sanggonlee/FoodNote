@@ -10,6 +10,8 @@
     <string name="enter_description_string">Enter description</string>
     <string name="ingredients_string">Ingredients</string>
     <string name="enter_ingredients_string">Enter ingredients</string>
+    <string name="steps_string">Steps</string>
+    <string name="enter_string">Enter</string>
     <string name="not_done_string">Not Done</string>
     <string name="priority_low_string">Low</string>
     <string name="priority_medium_string">Medium</string>

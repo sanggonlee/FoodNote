@@ -25,9 +25,12 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -77,6 +80,8 @@ public class FullscreenActivity extends Activity {
     String unsavedTitle;
     String unsavedDescription;
     String unsavedIngredients;
+
+    AddStepListAdapter mAddStepAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,6 +174,11 @@ public class FullscreenActivity extends Activity {
         mIngredients.setText(unsavedIngredients);
         /***/
 
+        ListView addStepListView = (ListView)findViewById(R.id.addStepsList);
+        mAddStepAdapter = new AddStepListAdapter(this, addStepListView);
+        mAddStepAdapter.add(new AddStepItem(""));
+        addStepListView.setAdapter(mAddStepAdapter);
+
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
@@ -224,6 +234,7 @@ public class FullscreenActivity extends Activity {
 
     public void onCancelButtonClicked(View view) {
         clearContents();
+        mAddStepAdapter.clear();
         drawerLayout.closeDrawer(rightRL);
     }
 
