@@ -6,10 +6,12 @@ package com.example.foodnote;
 public class AddStepItem {
     public String step;
     private boolean isEditing;
+    private int height;
 
     public AddStepItem(String step) {
         this.step = step;
         this.isEditing = true;
+        this.height = 400;
     }
 
     public boolean getIsEditing() {
@@ -18,5 +20,13 @@ public class AddStepItem {
 
     public void setIsEditing(boolean editing) {
         this.isEditing = editing;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int h) {
+        this.height = h;
     }
 }

@@ -1,13 +1,19 @@
 package com.example.foodnote;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Point;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
@@ -30,38 +36,30 @@ public class AddStepListAdapter extends BaseAdapter {
     Context mContext;
     ListView mListView;
 
-    private static final int UNBOUNDED = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+    private final int IMAGE_CHOOSE_REQ_CODE = 1;
 
     public AddStepListAdapter(Context context, ListView listView) {
         mContext = context;
         mListView = listView;
     }
 
-
-    // To calculate the total height of all items in ListView call with items = adapter.getCount()
-    public static int getItemHeightofListView(ListView listView, int items) {
-        ListAdapter adapter = listView.getAdapter();
-
-        int grossElementHeight = 10;
-        for (int i = 0; i < items; i++) {
-            View childView = adapter.getView(i, null, listView);
-            childView.measure(UNBOUNDED, UNBOUNDED);
-            grossElementHeight += childView.getMeasuredHeight();
+    // To calculate the total height of all items in ListView
+    public int getTotalHeightListview() {
+        int totalHeight = 10;
+        for (int i=0; i<getCount(); i++) {
+            totalHeight += mItems.get(i).getHeight();
         }
-        return grossElementHeight;
+        return totalHeight;
     }
 
     public void add(AddStepItem item) {
         mItems.add(item);
         notifyDataSetChanged();
 
-        if (getCount() == 1) {  // first time adding
-            return;
-        }
-
         // increase the ListView height
         ViewGroup.LayoutParams params = mListView.getLayoutParams();
-        params.height = getItemHeightofListView(mListView, getCount());
+        params.height = getTotalHeightListview();
+        Log.w("ASLA", "setting height to "+params.height);
         mListView.setLayoutParams(params);
         mListView.requestLayout();
     }
@@ -70,7 +68,7 @@ public class AddStepListAdapter extends BaseAdapter {
         mItems.clear();
         add(new AddStepItem(""));
         notifyDataSetChanged();
-        Log.w("ASLA", "num of items after clear="+mItems.size());
+        Log.w("ASLA", "num of items after clear=" + mItems.size());
     }
 
     @Override
@@ -90,7 +88,6 @@ public class AddStepListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        Log.w("ASLA", "getView, pos="+position);
         final AddStepItem item = getItem(position);
 
         if (convertView == null) {
@@ -99,10 +96,48 @@ public class AddStepListAdapter extends BaseAdapter {
 
         // set step number
         TextView stepNumberView = (TextView)convertView.findViewById(R.id.addStepItemNumber);
-        stepNumberView.setText(Integer.toString(position+1)+". ");
+        stepNumberView.setText(String.format(Integer.toString(position + 1) + ". "));
+
+        final Button stepPictureAddButton = (Button)convertView.findViewById(R.id.addStepPictureButton);
+        stepPictureAddButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                ((Activity)mContext).startActivityForResult(intent, IMAGE_CHOOSE_REQ_CODE);
+            }
+        });
 
         final EditText stepAddEdittext = (EditText)convertView.findViewById(R.id.addStepItemEdittext);
+        stepAddEdittext.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                // prevent inserting a newline
+                if (event != null && (event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                    InputMethodManager in = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    in.hideSoftInputFromWindow(v.getApplicationWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                    return true;
+                }
+                return false;
+            }
+        });
+
         final TextView stepAddText = (TextView)convertView.findViewById(R.id.addStepItemText);
+        stepAddText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                item.setHeight(stepAddText.getHeight());
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
+        });
+
         final Button stepAddButton = (Button)convertView.findViewById(R.id.addStepItemEnterButton);
         stepAddButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,7 +146,6 @@ public class AddStepListAdapter extends BaseAdapter {
                 item.setIsEditing(false);
                 item.step = stepAddEdittext.getText().toString();
                 stepAddEdittext.setText("");
-                stepAddEdittext.setVisibility(View.GONE);
 
                 // create new step
                 add(new AddStepItem(""));
