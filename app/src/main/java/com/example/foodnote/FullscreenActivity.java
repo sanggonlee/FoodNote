@@ -1,7 +1,5 @@
 package com.example.foodnote;
 
-import com.example.foodnote.util.SystemUiHider;
-
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
@@ -14,7 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.widget.DrawerLayout;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -24,13 +21,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
-import java.util.ArrayList;
+import com.example.foodnote.util.SystemUiHider;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -93,6 +87,7 @@ public class FullscreenActivity extends Activity {
         actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayUseLogoEnabled(false);
+        actionBar.setIcon(R.drawable.transparent);
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);

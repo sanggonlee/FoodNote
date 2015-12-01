@@ -25,6 +25,8 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,10 +57,16 @@ public class AddStepListAdapter extends BaseAdapter {
     public void add(AddStepItem item) {
         mItems.add(item);
         notifyDataSetChanged();
+        //mListView.requestLayout();
+
+        int total = 0;
+        for (int i=0; i<getCount()-1; i++) {
+            total += mListView.getChildAt(i).getHeight();
+        }
 
         // increase the ListView height
         ViewGroup.LayoutParams params = mListView.getLayoutParams();
-        params.height = getTotalHeightListview();
+        params.height = total+item.getHeight();
         Log.w("ASLA", "setting height to "+params.height);
         mListView.setLayoutParams(params);
         mListView.requestLayout();
@@ -105,7 +113,7 @@ public class AddStepListAdapter extends BaseAdapter {
                 Intent intent = new Intent();
                 intent.setType("image/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
-                ((Activity)mContext).startActivityForResult(intent, IMAGE_CHOOSE_REQ_CODE);
+                ((Activity) mContext).startActivityForResult(intent, IMAGE_CHOOSE_REQ_CODE);
             }
         });
 
@@ -123,20 +131,6 @@ public class AddStepListAdapter extends BaseAdapter {
         });
 
         final TextView stepAddText = (TextView)convertView.findViewById(R.id.addStepItemText);
-        stepAddText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                item.setHeight(stepAddText.getHeight());
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-            }
-        });
 
         final Button stepAddButton = (Button)convertView.findViewById(R.id.addStepItemEnterButton);
         stepAddButton.setOnClickListener(new View.OnClickListener() {
@@ -149,7 +143,13 @@ public class AddStepListAdapter extends BaseAdapter {
 
                 // create new step
                 add(new AddStepItem(""));
-                mListView.requestLayout();
+
+                // hide soft keyboard
+                View focusedView = ((Activity)mContext).getCurrentFocus();
+                if (focusedView != null) {
+                    InputMethodManager imm = (InputMethodManager)mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                }
             }
         });
 

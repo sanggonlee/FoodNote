@@ -11,7 +11,7 @@ public class AddStepItem {
     public AddStepItem(String step) {
         this.step = step;
         this.isEditing = true;
-        this.height = 400;
+        this.height = 200;
     }
 
     public boolean getIsEditing() {
