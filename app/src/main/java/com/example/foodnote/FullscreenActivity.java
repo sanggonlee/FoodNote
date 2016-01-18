@@ -3,15 +3,23 @@ package com.example.foodnote;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.ListActivity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -20,9 +28,15 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
+
+import java.util.Date;
 
 import com.example.foodnote.util.SystemUiHider;
 
@@ -33,38 +47,12 @@ import com.example.foodnote.util.SystemUiHider;
  * @see SystemUiHider
  */
 public class FullscreenActivity extends Activity {
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
-    private static final boolean AUTO_HIDE = false;
-
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-    /**
-     * If set, will toggle the system UI visibility upon interaction. Otherwise,
-     * will show the system UI visibility upon interaction.
-     */
-    private static final boolean TOGGLE_ON_CLICK = false;
-
-    /**
-     * The flags to pass to {@link SystemUiHider#getInstance}.
-     */
-    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
-
-    /**
-     * The instance of the {@link SystemUiHider} for this activity.!
-     */
-    private SystemUiHider mSystemUiHider;
     public static final String PREFS = "Writing";
 
     String TAG = "FullscreenActivity";
 
-    RelativeLayout rightRL;
+    RelativeLayout addRecipeRightRL;
+    RelativeLayout viewRecipeRightRL;
     DrawerLayout drawerLayout;
 
     EditText mTitleText;
@@ -75,7 +63,12 @@ public class FullscreenActivity extends Activity {
     String unsavedDescription;
     String unsavedIngredients;
 
+    RecipeDbHelper mDbHelper;
+
+    RecipeListAdapter mAdapter;
     AddStepListAdapter mAddStepAdapter;
+
+    private GestureDetectorCompat mDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,81 +76,28 @@ public class FullscreenActivity extends Activity {
 
         // transparent action bar
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
-        ActionBar actionBar = getActionBar();
-        actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayUseLogoEnabled(false);
-        actionBar.setIcon(R.drawable.transparent);
+        getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_fullscreen);
 
-        final View controlsView = findViewById(R.id.fullscreen_content_controls);
-        final View contentView = findViewById(R.id.fullscreen_content);
-
-        // Set up an instance of SystemUiHider to control the system UI for
-        // this activity.
-        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
-        mSystemUiHider.setup();
-        mSystemUiHider
-                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-                    // Cached values.
-                    int mControlsHeight;
-                    int mShortAnimTime;
-
-                    @Override
-                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-                    public void onVisibilityChange(boolean visible) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-                            // If the ViewPropertyAnimator API is available
-                            // (Honeycomb MR2 and later), use it to animate the
-                            // in-layout UI controls at the bottom of the
-                            // screen.
-                            if (mControlsHeight == 0) {
-                                mControlsHeight = controlsView.getHeight();
-                            }
-                            if (mShortAnimTime == 0) {
-                                mShortAnimTime = getResources().getInteger(
-                                        android.R.integer.config_shortAnimTime);
-                            }
-                            controlsView.animate()
-                                    .translationY(visible ? 0 : mControlsHeight)
-                                    .setDuration(mShortAnimTime);
-                        } else {
-                            // If the ViewPropertyAnimator APIs aren't
-                            // available, simply show or hide the in-layout UI
-                            // controls.
-                            controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
-                        }
-
-                        if (visible && AUTO_HIDE) {
-                            // Schedule a hide().
-                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                        }
-                    }
-                });
-
-        // Set up the user interaction to manually show or hide the system UI
-        contentView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (TOGGLE_ON_CLICK) {
-                    mSystemUiHider.toggle();
-                } else {
-                    mSystemUiHider.show();
-                }
-            }
-        });
-
-        rightRL = (RelativeLayout)findViewById(R.id.drawer_right);
+        addRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_add_recipe);
+        viewRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_view_recipe);
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         drawerLayout.setScrimColor(Color.parseColor("#DE000000"));
 
-        mTitleText = (EditText)findViewById(R.id.title);
-        mDescription = (EditText)findViewById(R.id.description);
-        mIngredients = (EditText)findViewById(R.id.ingredients);
+        SwipeDetector activitySwipeDetector = new SwipeDetector(this);
+
+        RelativeLayout addRecipeLayout = (RelativeLayout)findViewById(R.id.recipeAddLayout);
+        addRecipeLayout.setOnTouchListener(activitySwipeDetector);
+        RelativeLayout viewRecipeLayout = (RelativeLayout)findViewById(R.id.recipeViewLayout);
+        viewRecipeLayout.setOnTouchListener(activitySwipeDetector);
+
+        mTitleText = (EditText)findViewById(R.id.recipeAddTitle);
+        mDescription = (EditText)findViewById(R.id.recipeAddDescription);
+        mIngredients = (EditText)findViewById(R.id.recipeAddIngredients);
 
         /** Preferences call from last time before app close    By. CHAN */
         SharedPreferences settings = getSharedPreferences(PREFS, 0);
@@ -169,26 +109,41 @@ public class FullscreenActivity extends Activity {
         mIngredients.setText(unsavedIngredients);
         /***/
 
-        ListView addStepListView = (ListView)findViewById(R.id.addStepsList);
+        mDbHelper = new RecipeDbHelper(getApplicationContext());
+
+        ListView recipeListView = (ListView)findViewById(R.id.recipeListView);
+        mAdapter = new RecipeListAdapter(getApplicationContext());
+        recipeListView.setAdapter(mAdapter);
+        recipeListView.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TextView recipeViewTitleText = (TextView)findViewById(R.id.recipeViewTitle);
+                recipeViewTitleText.setText(
+                        ((RecipeItem) parent.getItemAtPosition(position)).getTitle());
+
+                TextView recipeViewDescriptionText = (TextView)findViewById(R.id.recipeViewDescription);
+                recipeViewDescriptionText.setText(
+                        ((RecipeItem) parent.getItemAtPosition(position)).getDescription());
+
+                TextView recipeViewIngredientsText = (TextView)findViewById(R.id.recipeViewIngredients);
+                recipeViewIngredientsText.setText(
+                        ((RecipeItem) parent.getItemAtPosition(position)).getIngredients());
+
+                drawerLayout.openDrawer(viewRecipeRightRL);
+            }
+        });
+
+        ListView addStepListView = (ListView)findViewById(R.id.recipeAddStepsList);
         mAddStepAdapter = new AddStepListAdapter(this, addStepListView);
         mAddStepAdapter.add(new AddStepItem(""));
         addStepListView.setAdapter(mAddStepAdapter);
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        findViewById(R.id.list_button).setOnTouchListener(mDelayHideTouchListener);
     }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu items for use in the action bar
@@ -202,19 +157,11 @@ public class FullscreenActivity extends Activity {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
             case R.id.action_compose:
-                drawerLayout.openDrawer(rightRL);
+                drawerLayout.openDrawer(addRecipeRightRL);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    public void onRight(View view) {
-        drawerLayout.openDrawer(rightRL);
-    }
-
-    public void closeDrawer(View view) {
-        drawerLayout.closeDrawer(rightRL);
     }
 
     public void onAddRecipeBackgroundClicked(View view) {
@@ -224,13 +171,63 @@ public class FullscreenActivity extends Activity {
     }
 
     public void onHideButtonClicked(View view) {
-        drawerLayout.closeDrawer(rightRL);
+        drawerLayout.closeDrawer(addRecipeRightRL);
     }
 
     public void onCancelButtonClicked(View view) {
         clearContents();
         mAddStepAdapter.clear();
-        drawerLayout.closeDrawer(rightRL);
+        drawerLayout.closeDrawer(addRecipeRightRL);
+    }
+
+    public void onSubmitButtonClicked(View view) {
+        if (mTitleText.getText().length() == 0) {
+            Toast.makeText(getApplicationContext(),
+                    "Did you forget the recipe title?",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        RecipeItem recipeItem = new RecipeItem(
+                mTitleText.getText().toString(),
+                mDescription.getText().toString(),
+                mIngredients.getText().toString(),
+                new Date());
+        try {
+            insertRecipeDataToDb(recipeItem);
+            mAdapter.add(recipeItem);
+            Toast.makeText(getApplicationContext(),
+                    "Successfully saved the recipe for \"" + mTitleText.getText().toString() + "\"",
+                    Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+            Toast.makeText(getApplicationContext(),
+                    "Recipe save failed. Please try again.",
+                    Toast.LENGTH_LONG).show();
+            return; // don't clear the contents if unsuccessful
+        }
+
+        clearContents();
+        mAddStepAdapter.clear();
+        drawerLayout.closeDrawer(addRecipeRightRL);
+    }
+
+    public void onRecipeViewCloseButtonClicked(View view) {
+        drawerLayout.closeDrawer(viewRecipeRightRL);
+    }
+
+    public void insertRecipeDataToDb(RecipeItem recipeItem) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID, mAdapter.getCount());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE, recipeItem.getTitle());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION, recipeItem.getDescription());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS, recipeItem.getIngredients());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipeItem.getDate().getTime());
+
+        Log.i(TAG, "Inserting a Recipe entry data " + values.toString() + " to DB");
+        db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
     }
 
     private void clearContents() {
@@ -241,54 +238,84 @@ public class FullscreenActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(rightRL)) {
-            drawerLayout.closeDrawer(rightRL);
+        if (drawerLayout.isDrawerOpen(addRecipeRightRL)) {
+            drawerLayout.closeDrawer(addRecipeRightRL);
+        } else if (drawerLayout.isDrawerOpen(viewRecipeRightRL)) {
+            drawerLayout.closeDrawer(viewRecipeRightRL);
         } else {
             // default behaviour
             finish();
         }
     }
 
-    public void goToList(View view) {
-        Intent intent = new Intent(FullscreenActivity.this, RecipeBookListActivity.class);
-        startActivity(intent);
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        this.mDetector.onTouchEvent(event);
+        // Be sure to call the superclass implementation
+        return super.onTouchEvent(event);
     }
 
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            if (AUTO_HIDE) {
-                delayedHide(AUTO_HIDE_DELAY_MILLIS);
-            }
-            return false;
+    public void onSwipeRight() {
+        if (drawerLayout.isDrawerOpen(addRecipeRightRL)) {
+            drawerLayout.closeDrawer(addRecipeRightRL);
+        } else if (drawerLayout.isDrawerOpen(viewRecipeRightRL)){
+            drawerLayout.closeDrawer(viewRecipeRightRL);
         }
-    };
+    }
 
-    Handler mHideHandler = new Handler();
-    Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            //mSystemUiHider.show();
+    // Load stored RecipeItems
+    private void loadItems() {
+        // HACK! Uncomment the below line when schema is changed (only once)
+        // TODO: To be removed when the schema is finalized
+        //getApplicationContext().deleteDatabase(RecipeDbHelper.DATABASE_NAME);
+
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        // Specifies which columns to use from the database
+        String[] projection = {
+                RecipeContract.RecipeEntry._ID,
+                RecipeContract.RecipeEntry.COLUMN_NAME_TITLE,
+                RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION,
+                RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS,
+                RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME,
+        };
+
+        // Sort by decreasing order of date
+        String sortOrder = RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME + " DESC";
+
+        Cursor c = db.query(
+                RecipeContract.RecipeEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                sortOrder
+        );
+
+        for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+            mAdapter.add(new RecipeItem(
+                    c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE)),
+                    c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION)),
+                    c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS)),
+                    new Date(c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME)))
+            ));
         }
-    };
+    }
 
-    /**
-     * Schedules a call to hide() in [delay] milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Load saved RecipeItems, if necessary
+        if (mAdapter.getCount() == 0) {
+            loadItems();
+        }
     }
 
     /** Preferences before close app    By. CHAN */
     @Override
-    protected  void onStop() {
+    protected void onStop() {
         super.onStop();
 
         SharedPreferences settings = getSharedPreferences(PREFS, 0);
@@ -302,4 +329,43 @@ public class FullscreenActivity extends Activity {
         editor.commit();
     }
     /***/
+
+    public class SwipeDetector implements View.OnTouchListener {
+        private Activity activity;
+        static final int MIN_DISTANCE = 60;
+        private float downX, upX;
+
+        public SwipeDetector(Activity activity) {
+            this.activity = activity;
+        }
+
+        public void onSwipeRight() {
+            ((FullscreenActivity) activity).onSwipeRight();
+        }
+
+        public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN: {
+                    downX = event.getX();
+                    return true;
+                }
+                case MotionEvent.ACTION_UP: {
+                    upX = event.getX();
+
+                    float deltaX = downX - upX;
+
+                    if (Math.abs(deltaX) > MIN_DISTANCE) {
+                        // left or right
+                        if (deltaX < 0) {
+                            this.onSwipeRight();
+                        }
+                    } else {
+                        onAddRecipeBackgroundClicked(v);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
