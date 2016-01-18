@@ -75,28 +75,9 @@ public class RecipeListAdapter extends BaseAdapter {
 		// Display Title in TextView
 		final TextView titleView = (TextView)itemLayout.getChildAt(0);
 		titleView.setText(recipeItem.getTitle());
-		
-		/*
-		// Set up Status CheckBox
-		final CheckBox statusView = (CheckBox)itemLayout.getChildAt(2);
-		statusView.setChecked(recipeItem.getStatus() == RecipeItem.Status.DONE);
 
-		statusView.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView,
-					boolean isChecked) {
-				Log.i(TAG, "Entered onCheckedChanged()");
-
-				// TODO - set up an OnCheckedChangeListener, which
-				// is called when the user toggles the status checkbox
-				buttonView.setChecked(isChecked);
-			}
-		});
-		*/
-
-		// Display Priority in a TextView
-		//final TextView descriptionView = (TextView)itemLayout.getChildAt(4);
-		//descriptionView.setText(recipeItem.getDescription().toString());
+		final TextView descriptionView = (TextView)itemLayout.getChildAt(1);
+		descriptionView.setText(recipeItem.getDescription());
 
 		// Display Time and Date.
 		final TextView dateView = (TextView)itemLayout.getChildAt(2);

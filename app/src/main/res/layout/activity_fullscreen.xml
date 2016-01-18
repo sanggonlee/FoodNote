@@ -10,29 +10,16 @@
             <!-- The primary full-screen view. This can be replaced with whatever view
                  is needed to present your content, e.g. VideoView, SurfaceView,
                  TextureView, etc. -->
-            <TextView android:id="@+id/fullscreen_content" android:layout_width="match_parent"
-                android:layout_height="match_parent" android:keepScreenOn="false" android:textColor="#33b5e5"
-                android:textStyle="bold" android:textSize="50sp"
-                android:gravity="center_vertical|center_horizontal"
-                android:text="@string/dummy_content" />
+
             <!-- This FrameLayout insets its children based on system windows using
                  android:fitsSystemWindows. -->
-            <FrameLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_gravity="bottom|center_horizontal"
-                android:fitsSystemWindows="true" >
-                    <LinearLayout android:id="@+id/fullscreen_content_controls" style="?metaButtonBarStyle"
-                        android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:layout_gravity="bottom|center_horizontal"
-                        android:orientation="horizontal">
-
-                        <Button android:id="@+id/list_button" style="?metaButtonBarButtonStyle"
-                            android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:background="#00000000"
-                            android:drawableTop="@drawable/configure"
-                            android:onClick="goToList"/>
-                    </LinearLayout>
-            </FrameLayout>
+            <ListView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/recipeListView"
+                android:paddingTop="?android:attr/actionBarSize"
+                android:layout_marginTop="5sp">
+            </ListView>
     </FrameLayout>
 
     <!-- Set left margin to -60 for the drawer to occupy full width-->
@@ -225,7 +212,8 @@
                     android:layout_below="@id/addStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
-                    android:text="@string/submit_string" />
+                    android:text="@string/submit_string"
+                    android:onClick="onSubmitButtonClicked"/>
 
             </RelativeLayout>
         </ScrollView>
