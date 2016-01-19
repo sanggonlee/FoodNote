@@ -24,7 +24,7 @@
 
     <!-- Set left margin to -60 for the drawer to occupy full width-->
     <RelativeLayout
-        android:id="@+id/drawer_right"
+        android:id="@+id/drawer_right_add_recipe"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_marginTop="?android:attr/actionBarSize"
@@ -33,11 +33,11 @@
         android:layout_gravity="center_horizontal">
 
         <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/drawer_scroll_view"
+            android:id="@+id/drawer_add_recipe_scroll_view"
             android:layout_width="match_parent" android:layout_height="match_parent">
 
             <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/RecipeAddLayout"
+                android:id="@+id/recipeAddLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -47,19 +47,19 @@
                 <!-- Title -->
 
                 <TextView
-                    android:id="@+id/TitleLabel"
+                    android:id="@+id/recipeAddTitleLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/title_string"
                     android:textAppearance="?android:attr/textAppearanceLarge"/>
 
                 <EditText
-                    android:id="@+id/title"
+                    android:id="@+id/recipeAddTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/TitleLabel"
+                    android:layout_below="@+id/recipeAddTitleLabel"
                     android:layout_marginTop="14dp"
                     android:paddingLeft="10dp"
                     android:paddingRight="2dp"
@@ -79,23 +79,23 @@
                 <!-- Description -->
 
                 <TextView
-                    android:id="@+id/descriptionTitle"
+                    android:id="@+id/recipeAddDescriptionLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/title"
+                    android:layout_below="@+id/recipeAddTitle"
                     android:layout_marginTop="25dp"
                     android:text="@string/description_string"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
                 <EditText
-                    android:id="@+id/description"
+                    android:id="@+id/recipeAddDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/descriptionTitle"
+                    android:layout_below="@+id/recipeAddDescriptionLabel"
                     android:layout_marginTop="14dp"
                     android:paddingLeft="10dp"
                     android:paddingRight="2dp"
@@ -113,23 +113,23 @@
                 <!-- Ingredients -->
 
                 <TextView
-                    android:id="@+id/ingredientsTitle"
+                    android:id="@+id/recipeAddIngredientsLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/description"
+                    android:layout_below="@+id/recipeAddDescription"
                     android:layout_marginTop="25dp"
                     android:text="@string/ingredients_string"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
                 <EditText
-                    android:id="@+id/ingredients"
+                    android:id="@+id/recipeAddIngredients"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/ingredientsTitle"
+                    android:layout_below="@+id/recipeAddIngredientsLabel"
                     android:layout_marginTop="14dp"
                     android:paddingLeft="10dp"
                     android:paddingRight="2dp"
@@ -147,21 +147,21 @@
                 <!-- Steps -->
 
                 <TextView
-                    android:id="@+id/stepsTitle"
+                    android:id="@+id/recipeAddStepsLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/ingredients"
+                    android:layout_below="@+id/recipeAddIngredients"
                     android:layout_marginTop="25dp"
                     android:text="@string/steps_string"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
                 <ListView
-                    android:id="@+id/addStepsList"
+                    android:id="@+id/recipeAddStepsList"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/stepsTitle"
+                    android:layout_below="@+id/recipeAddStepsLabel"
                     android:divider="@null"
                     android:dividerHeight="0dp"
                     android:descendantFocusability="beforeDescendants" />
@@ -178,7 +178,7 @@
                     android:layout_alignParentStart="true"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:layout_below="@id/addStepsList"
+                    android:layout_below="@id/recipeAddStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/hide_string"
@@ -193,7 +193,7 @@
                     android:layout_centerHorizontal="true"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:layout_below="@id/addStepsList"
+                    android:layout_below="@id/recipeAddStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/cancel_string"
@@ -209,11 +209,121 @@
                     android:layout_alignParentEnd="true"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:layout_below="@id/addStepsList"
+                    android:layout_below="@id/recipeAddStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/submit_string"
                     android:onClick="onSubmitButtonClicked"/>
+
+            </RelativeLayout>
+        </ScrollView>
+    </RelativeLayout>
+
+    <!-- Second right-side drawer for the recipe view !-->
+
+    <!-- Set left margin to -60 for the drawer to occupy full width-->
+    <RelativeLayout
+        android:id="@+id/drawer_right_view_recipe"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?android:attr/actionBarSize"
+        android:layout_marginLeft="-60dp"
+        android:layout_marginBottom="5dp"
+        android:layout_gravity="center_horizontal">
+
+        <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/drawer_view_recipe_scroll_view"
+            android:layout_width="match_parent" android:layout_height="match_parent">
+
+            <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/recipeViewLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:clickable="true"
+                android:onClick="onAddRecipeBackgroundClicked">
+
+                <!-- Title -->
+
+                <TextView
+                    android:id="@+id/recipeViewTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"/>
+
+                <!-- Description -->
+
+                <TextView
+                    android:id="@+id/recipeViewDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/recipeViewTitle"
+                    android:layout_marginTop="25dp"
+                    android:text="@string/description_string"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <!-- Ingredients -->
+
+                <TextView
+                    android:id="@+id/recipeViewIngredientsLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/recipeViewDescription"
+                    android:layout_marginTop="25dp"
+                    android:text="@string/ingredients_string"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <TextView
+                    android:id="@+id/recipeViewIngredients"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/recipeViewIngredientsLabel"
+                    android:layout_marginTop="25dp"
+                    android:text="@string/ingredients_string"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <!-- Steps -->
+
+                <TextView
+                    android:id="@+id/recipeViewStepLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/recipeViewIngredients"
+                    android:layout_marginTop="25dp"
+                    android:text="@string/steps_string"
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                <ListView
+                    android:id="@+id/recipeViewStepsList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/recipeViewStepLabel"
+                    android:divider="@null"
+                    android:dividerHeight="0dp"
+                    android:descendantFocusability="beforeDescendants" />
+
+                <Button
+                    android:id="@+id/recipeViewCloseButton"
+                    android:textColor="#FFFFFF"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:layout_centerHorizontal="true"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:layout_below="@id/recipeViewStepsList"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/button_shape"
+                    android:text="@string/close_string"
+                    android:onClick="onRecipeViewCloseButtonClicked"/>
 
             </RelativeLayout>
         </ScrollView>

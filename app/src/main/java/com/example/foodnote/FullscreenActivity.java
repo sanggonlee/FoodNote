@@ -15,8 +15,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.view.GestureDetectorCompat;
+import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -25,10 +28,13 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
 
 import java.util.Date;
 
@@ -45,7 +51,8 @@ public class FullscreenActivity extends Activity {
 
     String TAG = "FullscreenActivity";
 
-    RelativeLayout rightRL;
+    RelativeLayout addRecipeRightRL;
+    RelativeLayout viewRecipeRightRL;
     DrawerLayout drawerLayout;
 
     EditText mTitleText;
@@ -61,6 +68,8 @@ public class FullscreenActivity extends Activity {
     RecipeListAdapter mAdapter;
     AddStepListAdapter mAddStepAdapter;
 
+    private GestureDetectorCompat mDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,13 +83,21 @@ public class FullscreenActivity extends Activity {
 
         setContentView(R.layout.activity_fullscreen);
 
-        rightRL = (RelativeLayout)findViewById(R.id.drawer_right);
+        addRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_add_recipe);
+        viewRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_view_recipe);
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         drawerLayout.setScrimColor(Color.parseColor("#DE000000"));
 
-        mTitleText = (EditText)findViewById(R.id.title);
-        mDescription = (EditText)findViewById(R.id.description);
-        mIngredients = (EditText)findViewById(R.id.ingredients);
+        SwipeDetector activitySwipeDetector = new SwipeDetector(this);
+
+        RelativeLayout addRecipeLayout = (RelativeLayout)findViewById(R.id.recipeAddLayout);
+        addRecipeLayout.setOnTouchListener(activitySwipeDetector);
+        RelativeLayout viewRecipeLayout = (RelativeLayout)findViewById(R.id.recipeViewLayout);
+        viewRecipeLayout.setOnTouchListener(activitySwipeDetector);
+
+        mTitleText = (EditText)findViewById(R.id.recipeAddTitle);
+        mDescription = (EditText)findViewById(R.id.recipeAddDescription);
+        mIngredients = (EditText)findViewById(R.id.recipeAddIngredients);
 
         /** Preferences call from last time before app close    By. CHAN */
         SharedPreferences settings = getSharedPreferences(PREFS, 0);
@@ -97,8 +114,26 @@ public class FullscreenActivity extends Activity {
         ListView recipeListView = (ListView)findViewById(R.id.recipeListView);
         mAdapter = new RecipeListAdapter(getApplicationContext());
         recipeListView.setAdapter(mAdapter);
+        recipeListView.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TextView recipeViewTitleText = (TextView)findViewById(R.id.recipeViewTitle);
+                recipeViewTitleText.setText(
+                        ((RecipeItem) parent.getItemAtPosition(position)).getTitle());
 
-        ListView addStepListView = (ListView)findViewById(R.id.addStepsList);
+                TextView recipeViewDescriptionText = (TextView)findViewById(R.id.recipeViewDescription);
+                recipeViewDescriptionText.setText(
+                        ((RecipeItem) parent.getItemAtPosition(position)).getDescription());
+
+                TextView recipeViewIngredientsText = (TextView)findViewById(R.id.recipeViewIngredients);
+                recipeViewIngredientsText.setText(
+                        ((RecipeItem) parent.getItemAtPosition(position)).getIngredients());
+
+                drawerLayout.openDrawer(viewRecipeRightRL);
+            }
+        });
+
+        ListView addStepListView = (ListView)findViewById(R.id.recipeAddStepsList);
         mAddStepAdapter = new AddStepListAdapter(this, addStepListView);
         mAddStepAdapter.add(new AddStepItem(""));
         addStepListView.setAdapter(mAddStepAdapter);
@@ -122,7 +157,7 @@ public class FullscreenActivity extends Activity {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
             case R.id.action_compose:
-                drawerLayout.openDrawer(rightRL);
+                drawerLayout.openDrawer(addRecipeRightRL);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -136,16 +171,23 @@ public class FullscreenActivity extends Activity {
     }
 
     public void onHideButtonClicked(View view) {
-        drawerLayout.closeDrawer(rightRL);
+        drawerLayout.closeDrawer(addRecipeRightRL);
     }
 
     public void onCancelButtonClicked(View view) {
         clearContents();
         mAddStepAdapter.clear();
-        drawerLayout.closeDrawer(rightRL);
+        drawerLayout.closeDrawer(addRecipeRightRL);
     }
 
     public void onSubmitButtonClicked(View view) {
+        if (mTitleText.getText().length() == 0) {
+            Toast.makeText(getApplicationContext(),
+                    "Did you forget the recipe title?",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
         RecipeItem recipeItem = new RecipeItem(
                 mTitleText.getText().toString(),
                 mDescription.getText().toString(),
@@ -167,7 +209,11 @@ public class FullscreenActivity extends Activity {
 
         clearContents();
         mAddStepAdapter.clear();
-        drawerLayout.closeDrawer(rightRL);
+        drawerLayout.closeDrawer(addRecipeRightRL);
+    }
+
+    public void onRecipeViewCloseButtonClicked(View view) {
+        drawerLayout.closeDrawer(viewRecipeRightRL);
     }
 
     public void insertRecipeDataToDb(RecipeItem recipeItem) {
@@ -192,11 +238,28 @@ public class FullscreenActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(rightRL)) {
-            drawerLayout.closeDrawer(rightRL);
+        if (drawerLayout.isDrawerOpen(addRecipeRightRL)) {
+            drawerLayout.closeDrawer(addRecipeRightRL);
+        } else if (drawerLayout.isDrawerOpen(viewRecipeRightRL)) {
+            drawerLayout.closeDrawer(viewRecipeRightRL);
         } else {
             // default behaviour
             finish();
+        }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        this.mDetector.onTouchEvent(event);
+        // Be sure to call the superclass implementation
+        return super.onTouchEvent(event);
+    }
+
+    public void onSwipeRight() {
+        if (drawerLayout.isDrawerOpen(addRecipeRightRL)) {
+            drawerLayout.closeDrawer(addRecipeRightRL);
+        } else if (drawerLayout.isDrawerOpen(viewRecipeRightRL)){
+            drawerLayout.closeDrawer(viewRecipeRightRL);
         }
     }
 
@@ -266,4 +329,43 @@ public class FullscreenActivity extends Activity {
         editor.commit();
     }
     /***/
+
+    public class SwipeDetector implements View.OnTouchListener {
+        private Activity activity;
+        static final int MIN_DISTANCE = 60;
+        private float downX, upX;
+
+        public SwipeDetector(Activity activity) {
+            this.activity = activity;
+        }
+
+        public void onSwipeRight() {
+            ((FullscreenActivity) activity).onSwipeRight();
+        }
+
+        public boolean onTouch(View v, MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN: {
+                    downX = event.getX();
+                    return true;
+                }
+                case MotionEvent.ACTION_UP: {
+                    upX = event.getX();
+
+                    float deltaX = downX - upX;
+
+                    if (Math.abs(deltaX) > MIN_DISTANCE) {
+                        // left or right
+                        if (deltaX < 0) {
+                            this.onSwipeRight();
+                        }
+                    } else {
+                        onAddRecipeBackgroundClicked(v);
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
