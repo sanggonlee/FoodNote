@@ -30,9 +30,6 @@ import org.w3c.dom.Text;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Sanggon on 2015-09-11.
- */
 public class AddStepListAdapter extends BaseAdapter {
     private final List<AddStepItem> mItems = new ArrayList<>();
     Context mContext;
@@ -57,7 +54,6 @@ public class AddStepListAdapter extends BaseAdapter {
     public void add(AddStepItem item) {
         mItems.add(item);
         notifyDataSetChanged();
-        //mListView.requestLayout();
 
         int total = 0;
         for (int i=0; i<getCount()-1; i++) {
@@ -67,7 +63,6 @@ public class AddStepListAdapter extends BaseAdapter {
         // increase the ListView height
         ViewGroup.LayoutParams params = mListView.getLayoutParams();
         params.height = total+item.getHeight();
-        Log.w("ASLA", "setting height to "+params.height);
         mListView.setLayoutParams(params);
         mListView.requestLayout();
     }
@@ -76,7 +71,10 @@ public class AddStepListAdapter extends BaseAdapter {
         mItems.clear();
         add(new AddStepItem(""));
         notifyDataSetChanged();
-        Log.w("ASLA", "num of items after clear=" + mItems.size());
+    }
+
+    public void removeLast() {
+        mItems.remove(mItems.size() - 1);
     }
 
     @Override
@@ -138,7 +136,7 @@ public class AddStepListAdapter extends BaseAdapter {
             public void onClick(View view) {
                 // replace EditText with TextView
                 item.setIsEditing(false);
-                item.step = stepAddEdittext.getText().toString();
+                item.setStep(stepAddEdittext.getText().toString());
                 stepAddEdittext.setText("");
 
                 // create new step
@@ -161,7 +159,7 @@ public class AddStepListAdapter extends BaseAdapter {
             stepAddEdittext.setVisibility(View.GONE);
             stepAddText.setVisibility(View.VISIBLE);
             stepAddButton.setVisibility(View.GONE);
-            stepAddText.setText(item.step);
+            stepAddText.setText(item.getStep());
         }
 
         return convertView;

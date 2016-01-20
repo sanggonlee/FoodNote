@@ -231,9 +231,7 @@
         android:layout_marginBottom="5dp"
         android:layout_gravity="center_horizontal">
 
-        <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/drawer_view_recipe_scroll_view"
-            android:layout_width="match_parent" android:layout_height="match_parent">
+
 
             <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:id="@+id/recipeViewLayout"
@@ -267,25 +265,13 @@
                 <!-- Ingredients -->
 
                 <TextView
-                    android:id="@+id/recipeViewIngredientsLabel"
+                    android:id="@+id/recipeViewIngredients"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
                     android:layout_below="@+id/recipeViewDescription"
                     android:layout_marginTop="25dp"
-                    android:text="@string/ingredients_string"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
-
-                <TextView
-                    android:id="@+id/recipeViewIngredients"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/recipeViewIngredientsLabel"
-                    android:layout_marginTop="25dp"
-                    android:text="@string/ingredients_string"
                     android:textAppearance="?android:attr/textAppearanceMedium" />
 
                 <!-- Steps -->
@@ -299,7 +285,7 @@
                     android:layout_below="@+id/recipeViewIngredients"
                     android:layout_marginTop="25dp"
                     android:text="@string/steps_string"
-                    android:textAppearance="?android:attr/textAppearanceLarge" />
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
 
                 <ListView
                     android:id="@+id/recipeViewStepsList"
@@ -315,7 +301,6 @@
                     android:textColor="#FFFFFF"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentBottom="true"
                     android:layout_centerHorizontal="true"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
@@ -326,6 +311,5 @@
                     android:onClick="onRecipeViewCloseButtonClicked"/>
 
             </RelativeLayout>
-        </ScrollView>
     </RelativeLayout>
 </android.support.v4.widget.DrawerLayout>

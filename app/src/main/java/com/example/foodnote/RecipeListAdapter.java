@@ -33,6 +33,11 @@ public class RecipeListAdapter extends BaseAdapter {
 		notifyDataSetChanged();
 	}
 
+	public void addToFront(RecipeItem item) {
+		mItems.add(0, item);
+		notifyDataSetChanged();
+	}
+
 	// Clears the list adapter of all items.
 	public void clear() {
 		mItems.clear();
