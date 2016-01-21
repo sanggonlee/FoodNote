@@ -35,8 +35,6 @@ public class AddStepListAdapter extends BaseAdapter {
     Context mContext;
     ListView mListView;
 
-    private final int IMAGE_CHOOSE_REQ_CODE = 1;
-
     public AddStepListAdapter(Context context, ListView listView) {
         mContext = context;
         mListView = listView;
@@ -95,6 +93,7 @@ public class AddStepListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         final AddStepItem item = getItem(position);
+        final int pos = position;
 
         if (convertView == null) {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.add_step_item, parent, false);
@@ -104,18 +103,10 @@ public class AddStepListAdapter extends BaseAdapter {
         TextView stepNumberView = (TextView)convertView.findViewById(R.id.addStepItemNumber);
         stepNumberView.setText(String.format(Integer.toString(position + 1) + ". "));
 
-        final Button stepPictureAddButton = (Button)convertView.findViewById(R.id.addStepPictureButton);
-        stepPictureAddButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                ((Activity) mContext).startActivityForResult(intent, IMAGE_CHOOSE_REQ_CODE);
-            }
-        });
-
         final EditText stepAddEdittext = (EditText)convertView.findViewById(R.id.addStepItemEdittext);
+        final TextView stepAddText = (TextView)convertView.findViewById(R.id.addStepItemText);
+        final Button stepAddButton = (Button)convertView.findViewById(R.id.addStepItemEnterButton);
+
         stepAddEdittext.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 // prevent inserting a newline
@@ -128,9 +119,19 @@ public class AddStepListAdapter extends BaseAdapter {
             }
         });
 
-        final TextView stepAddText = (TextView)convertView.findViewById(R.id.addStepItemText);
+        stepAddText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for (int pIndex=0; pIndex<mItems.size(); pIndex++) {
+                    mItems.get(pIndex).setIsEditing(pIndex == pos);
+                }
+                item.setStep(stepAddText.getText().toString());
+                notifyDataSetChanged();
+                ((InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE))
+                        .toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+            }
+        });
 
-        final Button stepAddButton = (Button)convertView.findViewById(R.id.addStepItemEnterButton);
         stepAddButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -141,13 +142,6 @@ public class AddStepListAdapter extends BaseAdapter {
 
                 // create new step
                 add(new AddStepItem(""));
-
-                // hide soft keyboard
-                View focusedView = ((Activity)mContext).getCurrentFocus();
-                if (focusedView != null) {
-                    InputMethodManager imm = (InputMethodManager)mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-                }
             }
         });
 
@@ -155,6 +149,12 @@ public class AddStepListAdapter extends BaseAdapter {
             stepAddEdittext.setVisibility(View.VISIBLE);
             stepAddText.setVisibility(View.GONE);
             stepAddButton.setVisibility(View.VISIBLE);
+            stepAddEdittext.setText(item.getStep());
+            stepAddEdittext.requestFocus();
+            /** Soft keyboard is blocking the Edittext upon second click.
+             *  This is a bug on Android as per https://code.google.com/p/android/issues/detail?id=182191
+             *  TODO: Find a workaround to fix this
+             */
         } else {
             stepAddEdittext.setVisibility(View.GONE);
             stepAddText.setVisibility(View.VISIBLE);
