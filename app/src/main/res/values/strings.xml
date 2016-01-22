@@ -26,6 +26,7 @@
     <string name="submit_string">Submit</string>
     <string name="close_string">Close</string>
     <string name="enter_title_string">Enter Title</string>
+    <string name="picture_string">Picture</string>
 
     <string name="title_activity_fullscreen">FullscreenActivity</string>
     <string name="dummy_button">Dummy Button</string>

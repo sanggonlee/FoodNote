@@ -13,6 +13,7 @@ public final class RecipeContract {
     	public static final String COLUMN_NAME_TITLE = "title";
     	public static final String COLUMN_NAME_DESCRIPTION = "description";
     	public static final String COLUMN_NAME_INGREDIENTS = "ingredients";
+		public static final String COLUMN_NAME_IMAGE = "image";
     	public static final String COLUMN_NAME_UPDATE_TIME = "update_time";
     }
 	public static abstract class StepEntry implements BaseColumns {

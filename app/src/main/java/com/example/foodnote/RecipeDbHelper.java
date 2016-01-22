@@ -21,6 +21,7 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
                     RecipeEntry.COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
                     RecipeEntry.COLUMN_NAME_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
                     RecipeEntry.COLUMN_NAME_INGREDIENTS + TEXT_TYPE + COMMA_SEP +
+                    RecipeEntry.COLUMN_NAME_IMAGE + TEXT_TYPE + COMMA_SEP +
                     RecipeEntry.COLUMN_NAME_UPDATE_TIME + INTEGER_TYPE +
                     " )";
 

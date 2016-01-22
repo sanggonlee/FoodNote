@@ -1,7 +1,7 @@
 <android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent">
 
    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
@@ -76,6 +76,28 @@
                     <requestFocus />
                 </EditText>
 
+                <!-- Picture -->
+                <TextView
+                    android:id="@+id/recipeAddPictureLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/recipeAddTitle"
+                    android:layout_marginTop="25dp"
+                    android:text="@string/picture_string"
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                <ImageButton
+                    android:id="@+id/recipeAddPicture"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/recipeAddPictureLabel"
+                    android:background="@drawable/img_upload_icon"
+                    android:onClick="onAddPictureButtonClicked" />
+
                 <!-- Description -->
 
                 <TextView
@@ -84,7 +106,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/recipeAddTitle"
+                    android:layout_below="@+id/recipeAddPicture"
                     android:layout_marginTop="25dp"
                     android:text="@string/description_string"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
@@ -249,18 +271,36 @@
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceLarge"/>
 
-                <!-- Description -->
-
-                <TextView
-                    android:id="@+id/recipeViewDescription"
+                <RelativeLayout
+                    android:id="@+id/recipeViewPictureAndDescription"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
                     android:layout_below="@+id/recipeViewTitle"
-                    android:layout_marginTop="25dp"
-                    android:text="@string/description_string"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
+                    android:orientation="horizontal"
+                    android:layout_marginTop="25dp">
+
+                    <!-- Picture -->
+
+                    <ImageView
+                        android:id="@+id/recipeViewPicture"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentStart="true" />
+
+                    <!-- Description -->
+
+                    <TextView
+                        android:id="@+id/recipeViewDescription"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toRightOf="@+id/recipeViewPicture"
+                        android:layout_toEndOf="@+id/recipeViewPicture"
+                        android:paddingLeft="10sp"
+                        android:text="@string/description_string"
+                        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                    </RelativeLayout>
 
                 <!-- Ingredients -->
 
@@ -270,7 +310,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/recipeViewDescription"
+                    android:layout_below="@+id/recipeViewPictureAndDescription"
                     android:layout_marginTop="25dp"
                     android:textAppearance="?android:attr/textAppearanceMedium" />
 

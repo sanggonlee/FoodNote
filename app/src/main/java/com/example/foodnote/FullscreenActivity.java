@@ -11,11 +11,22 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
+import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -30,13 +41,18 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.util.Date;
 
 import com.example.foodnote.util.SystemUiHider;
@@ -49,6 +65,7 @@ import com.example.foodnote.util.SystemUiHider;
  */
 public class FullscreenActivity extends Activity {
     public static final String PREFS = "Writing";
+    public static final int IMAGE_CHOOSE_REQ_CODE = 0;
 
     String TAG = "FullscreenActivity";
 
@@ -59,6 +76,10 @@ public class FullscreenActivity extends Activity {
     EditText mRecipeAddTitleText;
     EditText mRecipeAddDescription;
     EditText mRecipeAddIngredients;
+
+    ImageButton mPictureButton;
+    @Nullable
+    Bitmap mPictureBitmap;
 
     String unsavedTitle;
     String unsavedDescription;
@@ -99,6 +120,9 @@ public class FullscreenActivity extends Activity {
         mRecipeAddDescription = (EditText)findViewById(R.id.recipeAddDescription);
         mRecipeAddIngredients = (EditText)findViewById(R.id.recipeAddIngredients);
 
+        mPictureButton = (ImageButton)findViewById(R.id.recipeAddPicture);
+        mPictureBitmap = null;
+
         /** Preferences call from last time before app close    By. CHAN */
         SharedPreferences settings = getSharedPreferences(PREFS, 0);
         unsavedTitle = settings.getString("unsavedTitle", "");
@@ -129,14 +153,23 @@ public class FullscreenActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 RecipeItem recipeItem = (RecipeItem) parent.getItemAtPosition(position);
 
-                TextView recipeViewTitleText = (TextView) findViewById(R.id.recipeViewTitle);
+                TextView recipeViewTitleText = (TextView)findViewById(R.id.recipeViewTitle);
                 recipeViewTitleText.setText(recipeItem.getTitle());
 
-                TextView recipeViewDescriptionText = (TextView) findViewById(R.id.recipeViewDescription);
+                TextView recipeViewDescriptionText = (TextView)findViewById(R.id.recipeViewDescription);
                 recipeViewDescriptionText.setText(recipeItem.getDescription());
 
-                TextView recipeViewIngredientsText = (TextView) findViewById(R.id.recipeViewIngredients);
+                TextView recipeViewIngredientsText = (TextView)findViewById(R.id.recipeViewIngredients);
                 recipeViewIngredientsText.setText("Ingredients: " + recipeItem.getIngredients());
+
+                ImageView recipeViewPicture = (ImageView)findViewById(R.id.recipeViewPicture);
+                byte[] blob = recipeItem.getPictureBlob();
+                if (blob != null) {
+                    recipeViewPicture.setImageBitmap(BitmapFactory.decodeByteArray(blob, 0, blob.length));
+                } else {
+                    recipeViewPicture.setImageDrawable(
+                            ContextCompat.getDrawable(getApplicationContext(), R.drawable.taco128));
+                }
 
                 // retrieve step data
                 SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -210,6 +243,62 @@ public class FullscreenActivity extends Activity {
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
 
+    public void onAddPictureButtonClicked(View view) {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), IMAGE_CHOOSE_REQ_CODE);
+    }
+
+    private Bitmap decodeUri(Uri selectedImage) throws FileNotFoundException {
+        // Decode image size
+
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImage), null, o);
+
+        // The new size we want to scale to
+        final int REQUIRED_SIZE = 140;
+
+        // Find the correct scale value. It should be the power of 2.
+        int width_tmp = o.outWidth, height_tmp = o.outHeight;
+        int scale = 1;
+        while (true) {
+            if (width_tmp / 2 < REQUIRED_SIZE
+                    || height_tmp / 2 < REQUIRED_SIZE) {
+                break;
+            }
+            width_tmp /= 2;
+            height_tmp /= 2;
+            scale *= 2;
+        }
+
+        // Decode with inSampleSize
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = scale;
+        return BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImage), null, o2);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == IMAGE_CHOOSE_REQ_CODE) {
+            if (resultCode == RESULT_OK) {
+                Uri imageUri = data.getData();
+                try {
+                    mPictureBitmap = decodeUri(imageUri);
+                    mPictureButton.setImageBitmap(mPictureBitmap);
+                } catch (Exception e) {
+                    Log.e(TAG, e.toString());
+                    Toast.makeText(getApplicationContext(),
+                            "Couldn't upload the picture. Please try again.",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
     public void onHideButtonClicked(View view) {
         drawerLayout.closeDrawer(addRecipeRightRL);
     }
@@ -228,11 +317,19 @@ public class FullscreenActivity extends Activity {
             return;
         }
 
+        byte[] compressedPicture = null;
+        if (mPictureBitmap != null) {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            mPictureBitmap.compress(Bitmap.CompressFormat.PNG, 0, outputStream);
+            compressedPicture = outputStream.toByteArray();
+        }
+
         RecipeItem recipeItem = new RecipeItem(
                 mAdapter.getCount(),
                 mRecipeAddTitleText.getText().toString(),
                 mRecipeAddDescription.getText().toString(),
                 mRecipeAddIngredients.getText().toString(),
+                compressedPicture,
                 new Date());
         try {
             mAddStepAdapter.removeLast();  // don't insert the empty entry
@@ -267,6 +364,7 @@ public class FullscreenActivity extends Activity {
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE, recipeItem.getTitle());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION, recipeItem.getDescription());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS, recipeItem.getIngredients());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE, recipeItem.getPictureBlob());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipeItem.getDate().getTime());
 
         db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
@@ -297,6 +395,8 @@ public class FullscreenActivity extends Activity {
         mRecipeAddTitleText.setText("");
         mRecipeAddDescription.setText("");
         mRecipeAddIngredients.setText("");
+        mPictureButton.setImageDrawable(
+                ContextCompat.getDrawable(getApplicationContext(), R.drawable.img_upload_icon));
     }
 
     @Override
@@ -333,6 +433,7 @@ public class FullscreenActivity extends Activity {
                 RecipeContract.RecipeEntry.COLUMN_NAME_TITLE,
                 RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION,
                 RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS,
+                RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE,
                 RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME,
         };
 
@@ -357,6 +458,7 @@ public class FullscreenActivity extends Activity {
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE)),
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION)),
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS)),
+                        c.getBlob(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE)),
                         new Date(c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME)))
                 ));
             }

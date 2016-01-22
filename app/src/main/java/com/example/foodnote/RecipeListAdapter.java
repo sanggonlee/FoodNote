@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +14,7 @@ import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -77,15 +80,21 @@ public class RecipeListAdapter extends BaseAdapter {
 					(RelativeLayout) LayoutInflater.from(mContext)
 				.inflate(R.layout.recipe_item, parent, false);
 
-		// Display Title in TextView
-		final TextView titleView = (TextView)itemLayout.getChildAt(0);
+		final ImageView imageView = (ImageView)itemLayout.getChildAt(0);
+		if (recipeItem.getPictureBlob() != null) {
+			imageView.setImageBitmap(BitmapFactory.decodeByteArray(
+					recipeItem.getPictureBlob(), 0, recipeItem.getPictureBlob().length));
+		} else {
+			imageView.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.taco128));
+		}
+
+		final TextView titleView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(0);
 		titleView.setText(recipeItem.getTitle());
 
-		final TextView descriptionView = (TextView)itemLayout.getChildAt(1);
+		final TextView descriptionView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(1);
 		descriptionView.setText(recipeItem.getDescription());
 
-		// Display Time and Date.
-		final TextView dateView = (TextView)itemLayout.getChildAt(2);
+		final TextView dateView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(2);
 		dateView.setText(RecipeItem.FORMAT.format(recipeItem.getDate()));
 
 		// Return the View you just created
