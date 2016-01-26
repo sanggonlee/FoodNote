@@ -34,7 +34,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AddStepListAdapter extends BaseAdapter {
-    private final List<AddStepItem> mItems = new ArrayList<>();
+    public static final int DEFAULT_ADD_STEP_ITEM_HEIGHT = 200;
+
+    private List<AddStepItem> mItems = new ArrayList<>();
     Context mContext;
     ListView mListView;
 
@@ -52,30 +54,40 @@ public class AddStepListAdapter extends BaseAdapter {
         return totalHeight;
     }
 
-    public void add(AddStepItem item) {
-        mItems.add(item);
-        notifyDataSetChanged();
-
+    public static void recalculateListViewHeight(ListView input, ListView output) {
         int total = 0;
-        for (int i=0; i<getCount()-1; i++) {
-            total += mListView.getChildAt(i).getHeight();
+        for (int i=0; i<input.getCount()-1; i++) {
+            total += input.getChildAt(i).getHeight();
         }
 
         // increase the ListView height
-        ViewGroup.LayoutParams params = mListView.getLayoutParams();
-        params.height = total+item.getHeight();
-        mListView.setLayoutParams(params);
-        mListView.requestLayout();
+        ViewGroup.LayoutParams params = output.getLayoutParams();
+        params.height = total + DEFAULT_ADD_STEP_ITEM_HEIGHT;
+        output.setLayoutParams(params);
+        output.requestLayout();
+    }
+
+    public void add(AddStepItem item) {
+        mItems.add(item);
+        notifyDataSetChanged();
+    }
+
+    public void addAndAdjustHeight(AddStepItem item) {
+        add(item);
+        recalculateListViewHeight(mListView, mListView);
     }
 
     public void clear() {
         mItems.clear();
-        add(new AddStepItem(""));
         notifyDataSetChanged();
     }
 
     public void removeLast() {
         mItems.remove(mItems.size() - 1);
+    }
+
+    public void setItems(List<AddStepItem> items) {
+        mItems = items;
     }
 
     @Override
@@ -143,8 +155,12 @@ public class AddStepListAdapter extends BaseAdapter {
                 item.setStep(stepAddEdittext.getText().toString());
                 stepAddEdittext.setText("");
 
-                // create new step
-                add(new AddStepItem(""));
+                if (pos+1 == mItems.size()) {
+                    // create new step if footer was submitted
+                    addAndAdjustHeight(new AddStepItem(""));
+                } else {
+                    notifyDataSetChanged();
+                }
             }
         });
 

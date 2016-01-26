@@ -42,7 +42,6 @@ public class ViewStepListAdapter extends BaseAdapter {
 
     public void add(AddStepItem item) {
         mItems.add(item);
-        notifyDataSetChanged();
     }
 
     public void clear() {

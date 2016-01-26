@@ -1,9 +1,6 @@
 package com.example.foodnote;
 
-import android.annotation.TargetApi;
-import android.app.ActionBar;
 import android.app.Activity;
-import android.app.ListActivity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -13,25 +10,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GestureDetectorCompat;
-import android.support.v4.view.MotionEventCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -41,7 +27,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -54,6 +39,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.util.Date;
+import java.util.List;
 
 import com.example.foodnote.util.SystemUiHider;
 
@@ -68,6 +54,12 @@ public class FullscreenActivity extends Activity {
     public static final int IMAGE_CHOOSE_REQ_CODE = 0;
 
     String TAG = "FullscreenActivity";
+
+    public enum RecipeEditorAction {
+        None, Create, Edit
+    }
+    RecipeEditorAction mRecipeEditorAction;
+    long mViewId;
 
     RelativeLayout addRecipeRightRL;
     RelativeLayout viewRecipeRightRL;
@@ -104,10 +96,34 @@ public class FullscreenActivity extends Activity {
 
         setContentView(R.layout.activity_fullscreen);
 
+        mRecipeEditorAction = RecipeEditorAction.None;
+
         addRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_add_recipe);
         viewRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_view_recipe);
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         drawerLayout.setScrimColor(Color.parseColor("#DE000000"));
+        drawerLayout.setDrawerListener(new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                if (mRecipeEditorAction == RecipeEditorAction.Edit
+                        && drawerView.getId() == R.id.drawer_right_view_recipe) {
+                    drawerLayout.openDrawer(addRecipeRightRL);
+                }
+                mViewStepAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+            }
+        });
 
         SwipeDetector activitySwipeDetector = new SwipeDetector(this);
 
@@ -141,7 +157,6 @@ public class FullscreenActivity extends Activity {
 
         ListView addStepListView = (ListView)findViewById(R.id.recipeAddStepsList);
         mAddStepAdapter = new AddStepListAdapter(this, addStepListView);
-        mAddStepAdapter.add(new AddStepItem(""));
         addStepListView.setAdapter(mAddStepAdapter);
 
         ListView viewStepListView = (ListView)findViewById(R.id.recipeViewStepsList);
@@ -152,6 +167,8 @@ public class FullscreenActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 RecipeItem recipeItem = (RecipeItem) parent.getItemAtPosition(position);
+
+                mViewId = recipeItem.getId();
 
                 TextView recipeViewTitleText = (TextView)findViewById(R.id.recipeViewTitle);
                 recipeViewTitleText.setText(recipeItem.getTitle());
@@ -230,6 +247,8 @@ public class FullscreenActivity extends Activity {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
             case R.id.action_compose:
+                mRecipeEditorAction = RecipeEditorAction.Create;
+                mAddStepAdapter.addAndAdjustHeight(new AddStepItem(""));
                 drawerLayout.openDrawer(addRecipeRightRL);
                 return true;
             default:
@@ -309,7 +328,7 @@ public class FullscreenActivity extends Activity {
         drawerLayout.closeDrawer(addRecipeRightRL);
     }
 
-    public void onSubmitButtonClicked(View view) {
+    public void onSubmitButtonClicked(View view) throws RuntimeException {
         if (mRecipeAddTitleText.getText().length() == 0) {
             Toast.makeText(getApplicationContext(),
                     "Recipe title missing",
@@ -324,8 +343,16 @@ public class FullscreenActivity extends Activity {
             compressedPicture = outputStream.toByteArray();
         }
 
+        long recipeId;
+        if (mRecipeEditorAction == RecipeEditorAction.Create) {
+            recipeId = mAdapter.getCount();
+        } else if (mRecipeEditorAction == RecipeEditorAction.Edit) {
+            recipeId = mViewId;
+        } else {
+            throw new RuntimeException("Trying to save data when action is not specified.");
+        }
         RecipeItem recipeItem = new RecipeItem(
-                mAdapter.getCount(),
+                recipeId,
                 mRecipeAddTitleText.getText().toString(),
                 mRecipeAddDescription.getText().toString(),
                 mRecipeAddIngredients.getText().toString(),
@@ -333,8 +360,15 @@ public class FullscreenActivity extends Activity {
                 new Date());
         try {
             mAddStepAdapter.removeLast();  // don't insert the empty entry
+            for (int stepIndex=0; stepIndex<mAddStepAdapter.getCount(); stepIndex++) {
+                recipeItem.addStep(mAddStepAdapter.getItem(stepIndex));
+            }
             insertRecipeDataToDb(recipeItem);
-            mAdapter.addToFront(recipeItem);
+
+            // reload items
+            mAdapter.clear();
+            loadItems();
+
             Toast.makeText(getApplicationContext(),
                     "Successfully saved the recipe for \"" + mRecipeAddTitleText.getText().toString() + "\"",
                     Toast.LENGTH_LONG).show();
@@ -346,6 +380,7 @@ public class FullscreenActivity extends Activity {
             return; // don't clear the contents if unsuccessful
         }
 
+        mRecipeEditorAction = RecipeEditorAction.None;
         clearContents();
         mAddStepAdapter.clear();
         drawerLayout.closeDrawer(addRecipeRightRL);
@@ -355,21 +390,70 @@ public class FullscreenActivity extends Activity {
         drawerLayout.closeDrawer(viewRecipeRightRL);
     }
 
+    public void onRecipeViewEditButtonClicked(View view) {
+        drawerLayout.closeDrawer(viewRecipeRightRL);
+        mRecipeEditorAction = RecipeEditorAction.Edit;
+
+        // get data from views
+
+        TextView recipeViewTitleText = (TextView)findViewById(R.id.recipeViewTitle);
+        mRecipeAddTitleText.setText(recipeViewTitleText.getText());
+
+        TextView recipeViewDescriptionText = (TextView)findViewById(R.id.recipeViewDescription);
+        mRecipeAddDescription.setText(recipeViewDescriptionText.getText());
+
+        TextView recipeViewIngredientsText = (TextView)findViewById(R.id.recipeViewIngredients);
+        mRecipeAddIngredients.setText(
+                parseFormattedIngredients(recipeViewIngredientsText.getText().toString()));
+
+        ImageView recipeViewPicture = (ImageView)findViewById(R.id.recipeViewPicture);
+        mPictureButton.setBackgroundResource(0);
+        mPictureButton.setImageDrawable(recipeViewPicture.getDrawable());
+
+        ListView viewStepsList = (ListView)findViewById(R.id.recipeViewStepsList);
+        ListView addStepsList = (ListView)findViewById(R.id.recipeAddStepsList);
+        for (int itemPos=0; itemPos<mViewStepAdapter.getCount(); itemPos++) {
+            AddStepItem item = mViewStepAdapter.getItem(itemPos);
+            item.setIsEditing(false);
+            mAddStepAdapter.add(item);
+        }
+        mAddStepAdapter.add(new AddStepItem(""));
+        AddStepListAdapter.recalculateListViewHeight(viewStepsList, addStepsList);
+    }
+
+    private String parseFormattedIngredients(String formatted) {
+        // For now, just remove the prefix label "Ingredients:"
+        return formatted.substring(13);    // hardcode the index for now..
+    }
+
     public void insertRecipeDataToDb(RecipeItem recipeItem) {
         // insert recipe data
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID, mAdapter.getCount());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID, recipeItem.getId());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE, recipeItem.getTitle());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION, recipeItem.getDescription());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS, recipeItem.getIngredients());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE, recipeItem.getPictureBlob());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipeItem.getDate().getTime());
 
-        db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
+        if (mRecipeEditorAction == RecipeEditorAction.Create) {
+            db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
+        } else if (mRecipeEditorAction == RecipeEditorAction.Edit) {
+            db.update(RecipeContract.RecipeEntry.TABLE_NAME,
+                    values,
+                    RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " + recipeItem.getId(),
+                    null);
+
+            // delete the existing steps for this recipe
+            db.delete(RecipeContract.StepEntry.TABLE_NAME,
+                    RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " + recipeItem.getId(),
+                    null);
+        }
 
         // insert step data
+        List<AddStepItem> steps = recipeItem.getSteps();
         try {
             String sqlQuery = "INSERT INTO " + RecipeContract.StepEntry.TABLE_NAME + " (" +
                     RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + ", " +
@@ -378,11 +462,11 @@ public class FullscreenActivity extends Activity {
                     ") VALUES (?,?,?);";
             SQLiteStatement statement = db.compileStatement(sqlQuery);
             db.beginTransaction();
-            for (int i = 0; i < mAddStepAdapter.getCount(); i++) {
+            for (int i = 0; i < steps.size(); i++) {
                 statement.clearBindings();
-                statement.bindLong(1, mAdapter.getCount()); // recipe id
+                statement.bindLong(1, recipeItem.getId()); // recipe id
                 statement.bindLong(2, i);
-                statement.bindString(3, mAddStepAdapter.getItem(i).getStep());
+                statement.bindString(3, steps.get(i).getStep());
                 statement.execute();
             }
             db.setTransactionSuccessful();
@@ -392,6 +476,7 @@ public class FullscreenActivity extends Activity {
     }
 
     private void clearContents() {
+        mRecipeEditorAction = RecipeEditorAction.None;
         mRecipeAddTitleText.setText("");
         mRecipeAddDescription.setText("");
         mRecipeAddIngredients.setText("");
@@ -453,14 +538,17 @@ public class FullscreenActivity extends Activity {
             );
 
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                mAdapter.add(new RecipeItem(
-                        c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID)),
+                long recipeId = c.getLong(
+                        c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID));
+                RecipeItem recipeItem = new RecipeItem(
+                        recipeId,
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE)),
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION)),
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS)),
                         c.getBlob(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE)),
                         new Date(c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME)))
-                ));
+                );
+                mAdapter.add(recipeItem);
             }
         } finally {
             if (c != null) {

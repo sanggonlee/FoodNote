@@ -1,7 +1,9 @@
 package com.example.foodnote;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import android.content.Intent;
@@ -24,6 +26,7 @@ public class RecipeItem {
 	private String mIngredients;
 	private byte[] mPictureBlob;
 	private Date mDate = new Date();
+	private List<AddStepItem> mSteps;
 
 	RecipeItem(long id, String title, String description, String ingredients, byte[] blob, Date date) {
 		this.mId = id;
@@ -32,6 +35,7 @@ public class RecipeItem {
 		this.mIngredients = ingredients;
 		this.mPictureBlob = blob;
 		this.mDate = date;
+		this.mSteps = new ArrayList<>();
 	}
 
 	// Create a new RecipeItem from data packaged in an Intent
@@ -85,6 +89,18 @@ public class RecipeItem {
 
 	public void setDate(Date date) {
 		mDate = date;
+	}
+
+	public List<AddStepItem> getSteps() {
+		return mSteps;
+	}
+
+	public void addStep(AddStepItem step) {
+		mSteps.add(step);
+	}
+
+	public void updateStep(int position, AddStepItem step) {
+		mSteps.set(position, step);
 	}
 
 	// Take a set of String data values and package them for transport in an Intent
