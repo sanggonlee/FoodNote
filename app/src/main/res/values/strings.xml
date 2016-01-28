@@ -28,6 +28,7 @@
     <string name="edit_string">Edit</string>
     <string name="enter_title_string">Enter Title</string>
     <string name="picture_string">Picture</string>
+    <string name="delete_string">Delete</string>
 
     <string name="title_activity_fullscreen">FullscreenActivity</string>
     <string name="dummy_button">Dummy Button</string>

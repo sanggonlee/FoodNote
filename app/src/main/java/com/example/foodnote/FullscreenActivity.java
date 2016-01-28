@@ -1,8 +1,10 @@
 package com.example.foodnote;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -388,6 +390,37 @@ public class FullscreenActivity extends Activity {
 
     public void onRecipeViewCloseButtonClicked(View view) {
         drawerLayout.closeDrawer(viewRecipeRightRL);
+    }
+
+    public void onRecipeViewDeleteButtonClicked(View view) {
+        new AlertDialog.Builder(FullscreenActivity.this)
+                .setTitle("Delete recipe")
+                .setMessage("Are you sure you want to delete this recipe? This action cannot be undone.")
+                .setCancelable(true)
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // delete from db
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                        db.delete(RecipeContract.StepEntry.TABLE_NAME,
+                                RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " + mViewId,
+                                null);
+                        db.delete(RecipeContract.RecipeEntry.TABLE_NAME,
+                                RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " + mViewId,
+                                null);
+
+                        // reload UIs
+                        mAdapter.clear();
+                        loadItems();
+
+                        drawerLayout.closeDrawer(viewRecipeRightRL);
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // do nothing
+                    }
+                })
+                .show();
     }
 
     public void onRecipeViewEditButtonClicked(View view) {
