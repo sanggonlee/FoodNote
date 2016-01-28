@@ -8,7 +8,7 @@
     <string name="title_string">Recipe Title</string>
     <string name="description_string">Recipe Description</string>
     <string name="enter_description_string">Enter description</string>
-    <string name="ingredients_string">Ingredients</string>
+    <string name="ingredients_string">Ingredients (separated by commas)</string>
     <string name="enter_ingredients_string">Enter ingredients</string>
     <string name="steps_string">Steps</string>
     <string name="enter_string">Enter</string>

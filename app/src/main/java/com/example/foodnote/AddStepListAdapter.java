@@ -19,12 +19,14 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -39,10 +41,13 @@ public class AddStepListAdapter extends BaseAdapter {
     private List<AddStepItem> mItems = new ArrayList<>();
     Context mContext;
     ListView mListView;
+    ArrayAdapter<String> mStepAutoCompleteAdapter;
 
     public AddStepListAdapter(Context context, ListView listView) {
         mContext = context;
         mListView = listView;
+        mStepAutoCompleteAdapter = new ArrayAdapter<>(mContext,
+                android.R.layout.simple_dropdown_item_1line);
     }
 
     // To calculate the total height of all items in ListView
@@ -82,6 +87,11 @@ public class AddStepListAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    public void setIngredients(String[] ingredients) {
+        mStepAutoCompleteAdapter.clear();
+        mStepAutoCompleteAdapter.addAll(ingredients);
+    }
+
     public void removeLast() {
         mItems.remove(mItems.size() - 1);
     }
@@ -118,7 +128,8 @@ public class AddStepListAdapter extends BaseAdapter {
         TextView stepNumberView = (TextView)convertView.findViewById(R.id.addStepItemNumber);
         stepNumberView.setText(String.format(Integer.toString(position + 1) + ". "));
 
-        final EditText stepAddEdittext = (EditText)convertView.findViewById(R.id.addStepItemEdittext);
+        final MultiAutoCompleteTextView stepAddEdittext =
+                (MultiAutoCompleteTextView)convertView.findViewById(R.id.addStepItemEdittext);
         final TextView stepAddText = (TextView)convertView.findViewById(R.id.addStepItemText);
         final Button stepAddButton = (Button)convertView.findViewById(R.id.addStepItemEnterButton);
 
@@ -133,6 +144,8 @@ public class AddStepListAdapter extends BaseAdapter {
                 return false;
             }
         });
+        stepAddEdittext.setAdapter(mStepAutoCompleteAdapter);
+        stepAddEdittext.setTokenizer(new IngredientTokenizer());
 
         stepAddText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -182,5 +195,39 @@ public class AddStepListAdapter extends BaseAdapter {
         }
 
         return convertView;
+    }
+
+    public class IngredientTokenizer implements MultiAutoCompleteTextView.Tokenizer {
+        public int findTokenStart(CharSequence text, int cursor) {
+            int i = cursor;
+
+            while (i > 0 && text.charAt(i-1) != ',' && text.charAt(i-1) != ' ') {
+                i--;
+            }
+            while (i < cursor && text.charAt(i) == ' ') {
+                i++;
+            }
+            return i;
+        }
+
+        public int findTokenEnd(CharSequence text, int cursor) {
+            int i = cursor;
+            int len = text.length();
+
+            while (i < len) {
+                if (text.charAt(i) == ',' || text.charAt(i) == ' ' || text.charAt(i) == '.') {
+                    // indicate end of the word with comma or space
+                    return i;
+                } else {
+                    i++;
+                }
+            }
+            return len;
+        }
+
+        public CharSequence terminateToken(CharSequence text) {
+            // we do not want the autocompleted text to end with comma or space
+            return text;
+        }
     }
 }

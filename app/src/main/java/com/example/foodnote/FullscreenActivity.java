@@ -137,6 +137,15 @@ public class FullscreenActivity extends Activity {
         mRecipeAddTitleText = (EditText)findViewById(R.id.recipeAddTitle);
         mRecipeAddDescription = (EditText)findViewById(R.id.recipeAddDescription);
         mRecipeAddIngredients = (EditText)findViewById(R.id.recipeAddIngredients);
+        mRecipeAddIngredients.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    mAddStepAdapter.setIngredients(
+                            mRecipeAddIngredients.getText().toString().split("[ ]*,[ ]*"));
+                }
+            }
+        });
 
         mPictureButton = (ImageButton)findViewById(R.id.recipeAddPicture);
         mPictureBitmap = null;
@@ -437,7 +446,7 @@ public class FullscreenActivity extends Activity {
 
         TextView recipeViewIngredientsText = (TextView)findViewById(R.id.recipeViewIngredients);
         mRecipeAddIngredients.setText(
-                parseFormattedIngredients(recipeViewIngredientsText.getText().toString()));
+                stripFormattedIngredients(recipeViewIngredientsText.getText().toString()));
 
         ImageView recipeViewPicture = (ImageView)findViewById(R.id.recipeViewPicture);
         mPictureButton.setBackgroundResource(0);
@@ -454,9 +463,9 @@ public class FullscreenActivity extends Activity {
         AddStepListAdapter.recalculateListViewHeight(viewStepsList, addStepsList);
     }
 
-    private String parseFormattedIngredients(String formatted) {
+    private String stripFormattedIngredients(String formatted) {
         // For now, just remove the prefix label "Ingredients:"
-        return formatted.substring(13);    // hardcode the index for now..
+        return formatted.substring(13);
     }
 
     public void insertRecipeDataToDb(RecipeItem recipeItem) {
