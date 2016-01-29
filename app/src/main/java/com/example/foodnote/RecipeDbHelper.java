@@ -33,11 +33,21 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
                     RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION + TEXT_TYPE +
                     " )";
 
+    private static final String SQL_CREATE_INGREDIENTS_ENTRIES =
+            "CREATE TABLE IF NOT EXISTS " + RecipeContract.IngredientsEntry.TABLE_NAME + " (" +
+                    RecipeContract.IngredientsEntry._ID + INTEGER_TYPE + "PRIMARY KEY" + COMMA_SEP +
+                    RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT + TEXT_TYPE + COMMA_SEP +
+                    "UNIQUE(" + RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT + ")" +
+                    " )";
+
     private static final String SQL_DELETE_RECIPE_ENTRIES =
             "DROP TABLE IF EXISTS " + RecipeEntry.TABLE_NAME;
 
     private static final String SQL_DELETE_STEP_ENTRIES =
             "DROP TABLE IF EXISTS " + RecipeContract.StepEntry.TABLE_NAME;
+
+    private static final String SQL_DELETE_INGREDIENTS_ENTRIES =
+            "DROP TABLE IF EXISTS " + RecipeContract.IngredientsEntry.TABLE_NAME;
     
     public RecipeDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -46,12 +56,14 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_RECIPE_ENTRIES);
         db.execSQL(SQL_CREATE_STEP_ENTRIES);
+        db.execSQL(SQL_CREATE_INGREDIENTS_ENTRIES);
     }
     
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // TODO: Modify this later
         db.execSQL(SQL_DELETE_RECIPE_ENTRIES);
         db.execSQL(SQL_DELETE_STEP_ENTRIES);
+        db.execSQL(SQL_DELETE_INGREDIENTS_ENTRIES);
         onCreate(db);
     }
 }

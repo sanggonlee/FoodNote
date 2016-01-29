@@ -29,10 +29,12 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +42,7 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -69,7 +72,7 @@ public class FullscreenActivity extends Activity {
 
     EditText mRecipeAddTitleText;
     EditText mRecipeAddDescription;
-    EditText mRecipeAddIngredients;
+    MultiAutoCompleteTextView mRecipeAddIngredients;
 
     ImageButton mPictureButton;
     @Nullable
@@ -84,6 +87,7 @@ public class FullscreenActivity extends Activity {
     RecipeListAdapter mAdapter;
     AddStepListAdapter mAddStepAdapter;
     ViewStepListAdapter mViewStepAdapter;
+    ArrayAdapter<String> mIngredientsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +140,7 @@ public class FullscreenActivity extends Activity {
 
         mRecipeAddTitleText = (EditText)findViewById(R.id.recipeAddTitle);
         mRecipeAddDescription = (EditText)findViewById(R.id.recipeAddDescription);
-        mRecipeAddIngredients = (EditText)findViewById(R.id.recipeAddIngredients);
+        mRecipeAddIngredients = (MultiAutoCompleteTextView)findViewById(R.id.recipeAddIngredients);
         mRecipeAddIngredients.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -181,16 +185,16 @@ public class FullscreenActivity extends Activity {
 
                 mViewId = recipeItem.getId();
 
-                TextView recipeViewTitleText = (TextView)findViewById(R.id.recipeViewTitle);
+                TextView recipeViewTitleText = (TextView) findViewById(R.id.recipeViewTitle);
                 recipeViewTitleText.setText(recipeItem.getTitle());
 
-                TextView recipeViewDescriptionText = (TextView)findViewById(R.id.recipeViewDescription);
+                TextView recipeViewDescriptionText = (TextView) findViewById(R.id.recipeViewDescription);
                 recipeViewDescriptionText.setText(recipeItem.getDescription());
 
-                TextView recipeViewIngredientsText = (TextView)findViewById(R.id.recipeViewIngredients);
+                TextView recipeViewIngredientsText = (TextView) findViewById(R.id.recipeViewIngredients);
                 recipeViewIngredientsText.setText("Ingredients: " + recipeItem.getIngredients());
 
-                ImageView recipeViewPicture = (ImageView)findViewById(R.id.recipeViewPicture);
+                ImageView recipeViewPicture = (ImageView) findViewById(R.id.recipeViewPicture);
                 byte[] blob = recipeItem.getPictureBlob();
                 if (blob != null) {
                     recipeViewPicture.setImageBitmap(BitmapFactory.decodeByteArray(blob, 0, blob.length));
@@ -238,6 +242,12 @@ public class FullscreenActivity extends Activity {
                 drawerLayout.openDrawer(viewRecipeRightRL);
             }
         });
+
+        // set ingredients data for ingredients section
+        mIngredientsAdapter = new ArrayAdapter<>(getApplicationContext(),
+                android.R.layout.simple_dropdown_item_1line);
+        mRecipeAddIngredients.setAdapter(mIngredientsAdapter);
+        mRecipeAddIngredients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
     }
 
     @Override
@@ -260,6 +270,7 @@ public class FullscreenActivity extends Activity {
             case R.id.action_compose:
                 mRecipeEditorAction = RecipeEditorAction.Create;
                 mAddStepAdapter.addAndAdjustHeight(new AddStepItem(""));
+                mRecipeAddTitleText.requestFocus();
                 drawerLayout.openDrawer(addRecipeRightRL);
                 return true;
             default:
@@ -494,22 +505,38 @@ public class FullscreenActivity extends Activity {
                     null);
         }
 
-        // insert step data
+        // SQL statement for inserting ingredients data
+        String[] ingredients = recipeItem.getIngredients().split("[ ]*,[ ]*");
+        String ingredientInsertSqlQuery =
+                "INSERT OR IGNORE INTO " + RecipeContract.IngredientsEntry.TABLE_NAME + " (" +
+                        RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT +
+                        ") VALUES (?);";
+        SQLiteStatement ingredientInsertStatement = db.compileStatement(ingredientInsertSqlQuery);
+
+        // SQL statement for inserting steps data
         List<AddStepItem> steps = recipeItem.getSteps();
+        String stepInsertSqlQuery = "INSERT INTO " + RecipeContract.StepEntry.TABLE_NAME + " (" +
+                RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + ", " +
+                RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + ", " +
+                RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION +
+                ") VALUES (?,?,?);";
+        SQLiteStatement stepInsertStatement = db.compileStatement(stepInsertSqlQuery);
+
+        // start db transaction for both ingredients and steps
         try {
-            String sqlQuery = "INSERT INTO " + RecipeContract.StepEntry.TABLE_NAME + " (" +
-                    RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + ", " +
-                    RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + ", " +
-                    RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION +
-                    ") VALUES (?,?,?);";
-            SQLiteStatement statement = db.compileStatement(sqlQuery);
             db.beginTransaction();
-            for (int i = 0; i < steps.size(); i++) {
-                statement.clearBindings();
-                statement.bindLong(1, recipeItem.getId()); // recipe id
-                statement.bindLong(2, i);
-                statement.bindString(3, steps.get(i).getStep());
-                statement.execute();
+            int index;
+            for (index = 0; index<ingredients.length; index++) {
+                ingredientInsertStatement.clearBindings();
+                ingredientInsertStatement.bindString(1, ingredients[index]);
+                ingredientInsertStatement.execute();
+            }
+            for (index = 0; index < steps.size(); index++) {
+                stepInsertStatement.clearBindings();
+                stepInsertStatement.bindLong(1, recipeItem.getId()); // recipe id
+                stepInsertStatement.bindLong(2, index);
+                stepInsertStatement.bindString(3, steps.get(index).getStep());
+                stepInsertStatement.execute();
             }
             db.setTransactionSuccessful();
         } finally {
@@ -563,6 +590,8 @@ public class FullscreenActivity extends Activity {
                 RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE,
                 RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME,
         };
+        String[] ingrProjection = { RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT };
+        mIngredientsAdapter.clear();
 
         // Sort by decreasing order of date
         String sortOrder = RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME + " DESC";
@@ -591,6 +620,13 @@ public class FullscreenActivity extends Activity {
                         new Date(c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME)))
                 );
                 mAdapter.add(recipeItem);
+            }
+
+            c = db.query(RecipeContract.IngredientsEntry.TABLE_NAME, ingrProjection,
+                    null, null, null, null, null);
+            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                mIngredientsAdapter.add(c.getString(c.getColumnIndexOrThrow((
+                        RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT))));
             }
         } finally {
             if (c != null) {

@@ -16,10 +16,16 @@ public final class RecipeContract {
 		public static final String COLUMN_NAME_IMAGE = "image";
     	public static final String COLUMN_NAME_UPDATE_TIME = "update_time";
     }
+
 	public static abstract class StepEntry implements BaseColumns {
 		public static final String TABLE_NAME = "recipe_step";
 		public static final String COLUMN_NAME_RECIPE_ID = "recipe_id";
 		public static final String COLUMN_NAME_STEP_NUM = "recipe_step_number";
 		public static final String COLUMN_NAME_STEP_DESCRIPTION = "recipe_step_description";
+	}
+
+	public static abstract class IngredientsEntry implements BaseColumns {
+		public static final String TABLE_NAME = "ingredients_table";
+		public static final String COLUMN_NAME_INGREDIENT = "ingredient_name";
 	}
 }
