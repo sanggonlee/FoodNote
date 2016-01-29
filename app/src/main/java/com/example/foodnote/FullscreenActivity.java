@@ -549,6 +549,7 @@ public class FullscreenActivity extends Activity {
         mRecipeAddTitleText.setText("");
         mRecipeAddDescription.setText("");
         mRecipeAddIngredients.setText("");
+        mPictureBitmap = null;
         mPictureButton.setImageDrawable(
                 ContextCompat.getDrawable(getApplicationContext(), R.drawable.img_upload_icon));
     }
