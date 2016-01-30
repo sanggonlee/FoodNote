@@ -6,12 +6,12 @@ package com.example.foodnote;
 public class AddStepItem {
     private String step;
     private boolean isEditing;
-    private int height;
+    private boolean isSubmitted;
 
     public AddStepItem(String step) {
         this.step = step;
         this.isEditing = true;
-        this.height = 200;
+        this.isSubmitted = false;
     }
 
     public boolean getIsEditing() {
@@ -22,12 +22,12 @@ public class AddStepItem {
         this.isEditing = editing;
     }
 
-    public int getHeight() {
-        return height;
+    public boolean getIsSubmitted() {
+        return isSubmitted;
     }
 
-    public void setHeight(int h) {
-        this.height = h;
+    public void setIsSubmitted(boolean submitted) {
+        this.isSubmitted = submitted;
     }
 
     public String getStep() {

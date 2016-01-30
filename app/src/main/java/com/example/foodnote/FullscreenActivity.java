@@ -380,16 +380,17 @@ public class FullscreenActivity extends Activity {
                 mRecipeAddIngredients.getText().toString(),
                 compressedPicture,
                 new Date());
+
         try {
-            mAddStepAdapter.removeLast();  // don't insert the empty entry
             for (int stepIndex=0; stepIndex<mAddStepAdapter.getCount(); stepIndex++) {
-                recipeItem.addStep(mAddStepAdapter.getItem(stepIndex));
+                if (mAddStepAdapter.getItem(stepIndex).getIsSubmitted()) {
+                    recipeItem.addStep(mAddStepAdapter.getItem(stepIndex));
+                } else {
+                    mAddStepAdapter.remove(stepIndex);
+                    stepIndex--;
+                }
             }
             insertRecipeDataToDb(recipeItem);
-
-            // reload items
-            mAdapter.clear();
-            loadItems();
 
             Toast.makeText(getApplicationContext(),
                     "Successfully saved the recipe for \"" + mRecipeAddTitleText.getText().toString() + "\"",
@@ -402,13 +403,17 @@ public class FullscreenActivity extends Activity {
             return; // don't clear the contents if unsuccessful
         }
 
-        mRecipeEditorAction = RecipeEditorAction.None;
         clearContents();
         mAddStepAdapter.clear();
         drawerLayout.closeDrawer(addRecipeRightRL);
+
+        // reload items
+        mAdapter.clear();
+        loadItems();
     }
 
     public void onRecipeViewCloseButtonClicked(View view) {
+        mRecipeEditorAction = RecipeEditorAction.None;
         drawerLayout.closeDrawer(viewRecipeRightRL);
     }
 
@@ -594,7 +599,7 @@ public class FullscreenActivity extends Activity {
         String[] ingrProjection = { RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT };
         mIngredientsAdapter.clear();
 
-        // Sort by decreasing order of date
+        // Sort recipes by decreasing order of date
         String sortOrder = RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME + " DESC";
 
         Cursor c = null;
@@ -610,10 +615,8 @@ public class FullscreenActivity extends Activity {
             );
 
             for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                long recipeId = c.getLong(
-                        c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID));
                 RecipeItem recipeItem = new RecipeItem(
-                        recipeId,
+                        c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID)),
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE)),
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION)),
                         c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS)),

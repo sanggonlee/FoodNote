@@ -50,15 +50,6 @@ public class AddStepListAdapter extends BaseAdapter {
                 android.R.layout.simple_dropdown_item_1line);
     }
 
-    // To calculate the total height of all items in ListView
-    public int getTotalHeightListview() {
-        int totalHeight = 10;
-        for (int i=0; i<getCount(); i++) {
-            totalHeight += mItems.get(i).getHeight();
-        }
-        return totalHeight;
-    }
-
     public static void recalculateListViewHeight(ListView input, ListView output) {
         int total = 0;
         for (int i=0; i<input.getCount()-1; i++) {
@@ -92,8 +83,8 @@ public class AddStepListAdapter extends BaseAdapter {
         mStepAutoCompleteAdapter.addAll(ingredients);
     }
 
-    public void removeLast() {
-        mItems.remove(mItems.size() - 1);
+    public void remove(int position) {
+        mItems.remove(position);
     }
 
     public void setItems(List<AddStepItem> items) {
@@ -165,6 +156,7 @@ public class AddStepListAdapter extends BaseAdapter {
             public void onClick(View view) {
                 // replace EditText with TextView
                 item.setIsEditing(false);
+                item.setIsSubmitted(true);
                 item.setStep(stepAddEdittext.getText().toString());
                 stepAddEdittext.setText("");
 
