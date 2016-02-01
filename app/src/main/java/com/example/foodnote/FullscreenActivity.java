@@ -269,7 +269,9 @@ public class FullscreenActivity extends Activity {
         switch (item.getItemId()) {
             case R.id.action_compose:
                 mRecipeEditorAction = RecipeEditorAction.Create;
-                mAddStepAdapter.addAndAdjustHeight(new AddStepItem(""));
+                if (mAddStepAdapter.getCount() == 0) {
+                    mAddStepAdapter.addAndAdjustHeight(new AddStepItem(""));
+                }
                 mRecipeAddTitleText.requestFocus();
                 drawerLayout.openDrawer(addRecipeRightRL);
                 return true;
@@ -329,6 +331,7 @@ public class FullscreenActivity extends Activity {
                 Uri imageUri = data.getData();
                 try {
                     mPictureBitmap = decodeUri(imageUri);
+                    mPictureButton.setBackgroundResource(0);
                     mPictureButton.setImageBitmap(mPictureBitmap);
                 } catch (Exception e) {
                     Log.e(TAG, e.toString());

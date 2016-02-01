@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">FoodNote</string>
+    <string name="app_name">My Cooking Secret</string>
     <string name="done_string">Done:</string>
     <string name="date_string">Date:</string>
     <string name="add_new_recipe_string">Add New Recipe</string>
