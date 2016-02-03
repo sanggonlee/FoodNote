@@ -26,7 +26,7 @@ public class RecipeItem {
 	private String mIngredients;
 	private byte[] mPictureBlob;
 	private Date mDate = new Date();
-	private List<AddStepItem> mSteps;
+	private List<StepItem> mSteps;
 
 	RecipeItem(long id, String title, String description, String ingredients, byte[] blob, Date date) {
 		this.mId = id;
@@ -91,15 +91,15 @@ public class RecipeItem {
 		mDate = date;
 	}
 
-	public List<AddStepItem> getSteps() {
+	public List<StepItem> getSteps() {
 		return mSteps;
 	}
 
-	public void addStep(AddStepItem step) {
+	public void addStep(StepItem step) {
 		mSteps.add(step);
 	}
 
-	public void updateStep(int position, AddStepItem step) {
+	public void updateStep(int position, StepItem step) {
 		mSteps.set(position, step);
 	}
 

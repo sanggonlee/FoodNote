@@ -1,51 +1,24 @@
 package com.example.foodnote;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.os.SystemClock;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.MultiAutoCompleteTextView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public class AddStepListAdapter extends BaseAdapter {
+public class AddStepListAdapter extends BaseStepListAdapter {
     public static final int DEFAULT_ADD_STEP_ITEM_HEIGHT = 200;
 
-    private List<AddStepItem> mItems = new ArrayList<>();
-    Context mContext;
-    ListView mListView;
     ArrayAdapter<String> mStepAutoCompleteAdapter;
 
     public AddStepListAdapter(Context context, ListView listView) {
-        mContext = context;
-        mListView = listView;
+        super(context, listView);
         mStepAutoCompleteAdapter = new ArrayAdapter<>(mContext,
                 android.R.layout.simple_dropdown_item_1line);
     }
@@ -63,18 +36,9 @@ public class AddStepListAdapter extends BaseAdapter {
         output.requestLayout();
     }
 
-    public void add(AddStepItem item) {
-        mItems.add(item);
-        notifyDataSetChanged();
-    }
-
-    public void addAndAdjustHeight(AddStepItem item) {
+    public void addAndAdjustHeight(StepItem item) {
         add(item);
         recalculateListViewHeight(mListView, mListView);
-    }
-
-    public void clear() {
-        mItems.clear();
         notifyDataSetChanged();
     }
 
@@ -83,32 +47,9 @@ public class AddStepListAdapter extends BaseAdapter {
         mStepAutoCompleteAdapter.addAll(ingredients);
     }
 
-    public void remove(int position) {
-        mItems.remove(position);
-    }
-
-    public void setItems(List<AddStepItem> items) {
-        mItems = items;
-    }
-
-    @Override
-    public int getCount() {
-        return mItems.size();
-    }
-
-    @Override
-    public AddStepItem getItem(int pos) {
-        return mItems.get(pos);
-    }
-
-    @Override
-    public long getItemId(int pos) {
-        return pos;
-    }
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        final AddStepItem item = getItem(position);
+        final StepItem item = getItem(position);
         final int pos = position;
 
         if (convertView == null) {
@@ -117,7 +58,7 @@ public class AddStepListAdapter extends BaseAdapter {
 
         // set step number
         TextView stepNumberView = (TextView)convertView.findViewById(R.id.addStepItemNumber);
-        stepNumberView.setText(String.format(Integer.toString(position + 1) + ". "));
+        stepNumberView.setText(Integer.toString(position + 1) + ". ");
 
         final MultiAutoCompleteTextView stepAddEdittext =
                 (MultiAutoCompleteTextView)convertView.findViewById(R.id.addStepItemEdittext);
@@ -141,8 +82,8 @@ public class AddStepListAdapter extends BaseAdapter {
         stepAddText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                for (int pIndex=0; pIndex<mItems.size(); pIndex++) {
-                    mItems.get(pIndex).setIsEditing(pIndex == pos);
+                for (int pIndex=0; pIndex<getCount(); pIndex++) {
+                    getItem(pIndex).setIsEditing(pIndex == pos);
                 }
                 item.setStep(stepAddText.getText().toString());
                 notifyDataSetChanged();
@@ -160,9 +101,9 @@ public class AddStepListAdapter extends BaseAdapter {
                 item.setStep(stepAddEdittext.getText().toString());
                 stepAddEdittext.setText("");
 
-                if (pos+1 == mItems.size()) {
+                if (getCount() == pos+1) {
                     // create new step if footer was submitted
-                    addAndAdjustHeight(new AddStepItem(""));
+                    addAndAdjustHeight(new StepItem(""));
                 } else {
                     notifyDataSetChanged();
                 }

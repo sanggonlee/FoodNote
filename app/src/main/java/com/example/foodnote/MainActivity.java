@@ -42,29 +42,14 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.example.foodnote.util.SystemUiHider;
-
-/**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
- *
- * @see SystemUiHider
- */
-public class FullscreenActivity extends Activity {
+public class MainActivity extends Activity {
     public static final String PREFS = "Writing";
     public static final int IMAGE_CHOOSE_REQ_CODE = 0;
 
-    String TAG = "FullscreenActivity";
-
-    public enum RecipeEditorAction {
-        None, Create, Edit
-    }
-    RecipeEditorAction mRecipeEditorAction;
-    long mViewId;
+    String TAG = "MainActivity";
 
     RelativeLayout addRecipeRightRL;
     RelativeLayout viewRecipeRightRL;
@@ -75,8 +60,7 @@ public class FullscreenActivity extends Activity {
     MultiAutoCompleteTextView mRecipeAddIngredients;
 
     ImageButton mPictureButton;
-    @Nullable
-    Bitmap mPictureBitmap;
+    @Nullable Bitmap mPictureBitmap;
 
     String unsavedTitle;
     String unsavedDescription;
@@ -102,7 +86,7 @@ public class FullscreenActivity extends Activity {
 
         setContentView(R.layout.activity_fullscreen);
 
-        mRecipeEditorAction = RecipeEditorAction.None;
+        //mRecipeEditorAction = RecipeEditorAction.None;
 
         addRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_add_recipe);
         viewRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_view_recipe);
@@ -119,7 +103,7 @@ public class FullscreenActivity extends Activity {
 
             @Override
             public void onDrawerClosed(View drawerView) {
-                if (mRecipeEditorAction == RecipeEditorAction.Edit
+                if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit
                         && drawerView.getId() == R.id.drawer_right_view_recipe) {
                     drawerLayout.openDrawer(addRecipeRightRL);
                 }
@@ -183,8 +167,6 @@ public class FullscreenActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 RecipeItem recipeItem = (RecipeItem) parent.getItemAtPosition(position);
 
-                mViewId = recipeItem.getId();
-
                 TextView recipeViewTitleText = (TextView) findViewById(R.id.recipeViewTitle);
                 recipeViewTitleText.setText(recipeItem.getTitle());
 
@@ -229,7 +211,7 @@ public class FullscreenActivity extends Activity {
 
                     mViewStepAdapter.clear();
                     for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                        mViewStepAdapter.add(new AddStepItem(c.getString(c.getColumnIndexOrThrow(
+                        mViewStepAdapter.add(new StepItem(c.getString(c.getColumnIndexOrThrow(
                                 RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION))
                         ));
                     }
@@ -268,9 +250,9 @@ public class FullscreenActivity extends Activity {
         // Handle presses on the action bar items
         switch (item.getItemId()) {
             case R.id.action_compose:
-                mRecipeEditorAction = RecipeEditorAction.Create;
+                ActionStateSingleton.getInstance().setEditorAction(ActionStateSingleton.EditorAction.Create);
                 if (mAddStepAdapter.getCount() == 0) {
-                    mAddStepAdapter.addAndAdjustHeight(new AddStepItem(""));
+                    mAddStepAdapter.addAndAdjustHeight(new StepItem(""));
                 }
                 mRecipeAddTitleText.requestFocus();
                 drawerLayout.openDrawer(addRecipeRightRL);
@@ -369,11 +351,12 @@ public class FullscreenActivity extends Activity {
         }
 
         long recipeId;
-        if (mRecipeEditorAction == RecipeEditorAction.Create) {
+        if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Create) {
             recipeId = mAdapter.getCount();
-        } else if (mRecipeEditorAction == RecipeEditorAction.Edit) {
-            recipeId = mViewId;
+        } else if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit) {
+            recipeId = ActionStateSingleton.getInstance().getViewId();
         } else {
+            // better to crash than corrupting db..
             throw new RuntimeException("Trying to save data when action is not specified.");
         }
         RecipeItem recipeItem = new RecipeItem(
@@ -416,12 +399,12 @@ public class FullscreenActivity extends Activity {
     }
 
     public void onRecipeViewCloseButtonClicked(View view) {
-        mRecipeEditorAction = RecipeEditorAction.None;
+        ActionStateSingleton.getInstance().setEditorAction(ActionStateSingleton.EditorAction.None);
         drawerLayout.closeDrawer(viewRecipeRightRL);
     }
 
     public void onRecipeViewDeleteButtonClicked(View view) {
-        new AlertDialog.Builder(FullscreenActivity.this)
+        new AlertDialog.Builder(MainActivity.this)
                 .setTitle("Delete recipe")
                 .setMessage("Are you sure you want to delete this recipe? This action cannot be undone.")
                 .setCancelable(true)
@@ -430,10 +413,12 @@ public class FullscreenActivity extends Activity {
                         // delete from db
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
                         db.delete(RecipeContract.StepEntry.TABLE_NAME,
-                                RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " + mViewId,
+                                RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " +
+                                        ActionStateSingleton.getInstance().getViewId(),
                                 null);
                         db.delete(RecipeContract.RecipeEntry.TABLE_NAME,
-                                RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " + mViewId,
+                                RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " +
+                                        ActionStateSingleton.getInstance().getViewId(),
                                 null);
 
                         // reload UIs
@@ -453,7 +438,7 @@ public class FullscreenActivity extends Activity {
 
     public void onRecipeViewEditButtonClicked(View view) {
         drawerLayout.closeDrawer(viewRecipeRightRL);
-        mRecipeEditorAction = RecipeEditorAction.Edit;
+        ActionStateSingleton.getInstance().setEditorAction(ActionStateSingleton.EditorAction.Edit);
 
         // get data from views
 
@@ -474,11 +459,11 @@ public class FullscreenActivity extends Activity {
         ListView viewStepsList = (ListView)findViewById(R.id.recipeViewStepsList);
         ListView addStepsList = (ListView)findViewById(R.id.recipeAddStepsList);
         for (int itemPos=0; itemPos<mViewStepAdapter.getCount(); itemPos++) {
-            AddStepItem item = mViewStepAdapter.getItem(itemPos);
+            StepItem item = mViewStepAdapter.getItem(itemPos);
             item.setIsEditing(false);
             mAddStepAdapter.add(item);
         }
-        mAddStepAdapter.add(new AddStepItem(""));
+        mAddStepAdapter.add(new StepItem(""));
         AddStepListAdapter.recalculateListViewHeight(viewStepsList, addStepsList);
     }
 
@@ -499,9 +484,9 @@ public class FullscreenActivity extends Activity {
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE, recipeItem.getPictureBlob());
         values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipeItem.getDate().getTime());
 
-        if (mRecipeEditorAction == RecipeEditorAction.Create) {
+        if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Create) {
             db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
-        } else if (mRecipeEditorAction == RecipeEditorAction.Edit) {
+        } else if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit) {
             db.update(RecipeContract.RecipeEntry.TABLE_NAME,
                     values,
                     RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " + recipeItem.getId(),
@@ -522,7 +507,7 @@ public class FullscreenActivity extends Activity {
         SQLiteStatement ingredientInsertStatement = db.compileStatement(ingredientInsertSqlQuery);
 
         // SQL statement for inserting steps data
-        List<AddStepItem> steps = recipeItem.getSteps();
+        List<StepItem> steps = recipeItem.getSteps();
         String stepInsertSqlQuery = "INSERT INTO " + RecipeContract.StepEntry.TABLE_NAME + " (" +
                 RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + ", " +
                 RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + ", " +
@@ -553,7 +538,7 @@ public class FullscreenActivity extends Activity {
     }
 
     private void clearContents() {
-        mRecipeEditorAction = RecipeEditorAction.None;
+        ActionStateSingleton.getInstance().setEditorAction(ActionStateSingleton.EditorAction.None);
         mRecipeAddTitleText.setText("");
         mRecipeAddDescription.setText("");
         mRecipeAddIngredients.setText("");
@@ -679,7 +664,7 @@ public class FullscreenActivity extends Activity {
         }
 
         public void onSwipeRight() {
-            ((FullscreenActivity) activity).onSwipeRight();
+            ((MainActivity) activity).onSwipeRight();
         }
 
         public boolean onTouch(View v, MotionEvent event) {

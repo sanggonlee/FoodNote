@@ -1,14 +1,11 @@
 package com.example.foodnote;
 
-/**
- * Created by Sanggon on 2015-09-11.
- */
-public class AddStepItem {
+public class StepItem {
     private String step;
     private boolean isEditing;
     private boolean isSubmitted;
 
-    public AddStepItem(String step) {
+    public StepItem(String step) {
         this.step = step;
         this.isEditing = true;
         this.isSubmitted = false;
