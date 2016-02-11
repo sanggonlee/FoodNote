@@ -23,6 +23,13 @@ public class AddStepListAdapter extends BaseStepListAdapter {
                 android.R.layout.simple_dropdown_item_1line);
     }
 
+    /*
+     *   Reset the output ListView's height based on the input ListView's items'
+     *   height combined in addition to the new step item's height
+     *
+     *   This is a workaround for making sure the step items fully render with
+     *   appropriate margin at the bottom to allow the EditText of new item to grow
+     */
     public static void recalculateListViewHeight(ListView input, ListView output) {
         int total = 0;
         for (int i=0; i<input.getCount()-1; i++) {
@@ -36,6 +43,9 @@ public class AddStepListAdapter extends BaseStepListAdapter {
         output.requestLayout();
     }
 
+    /*
+     *  Adjust the ListView's height right after a new item is added
+     */
     public void addAndAdjustHeight(StepItem item) {
         add(item);
         recalculateListViewHeight(mListView, mListView);
@@ -76,6 +86,8 @@ public class AddStepListAdapter extends BaseStepListAdapter {
                 return false;
             }
         });
+
+        // Set autocomplete adapter
         stepAddEdittext.setAdapter(mStepAutoCompleteAdapter);
         stepAddEdittext.setTokenizer(new IngredientTokenizer());
 
@@ -83,6 +95,8 @@ public class AddStepListAdapter extends BaseStepListAdapter {
             @Override
             public void onClick(View v) {
                 for (int pIndex=0; pIndex<getCount(); pIndex++) {
+                    // Only set IsEditing for the currently clicked item
+                    // so that we only have 1 item being edited at a time
                     getItem(pIndex).setIsEditing(pIndex == pos);
                 }
                 item.setStep(stepAddText.getText().toString());
@@ -134,6 +148,7 @@ public class AddStepListAdapter extends BaseStepListAdapter {
         public int findTokenStart(CharSequence text, int cursor) {
             int i = cursor;
 
+            // Start detecting autocomplete whenever comma or space is encountered
             while (i > 0 && text.charAt(i-1) != ',' && text.charAt(i-1) != ' ') {
                 i--;
             }

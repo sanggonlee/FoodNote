@@ -8,6 +8,9 @@ import java.util.Locale;
 
 import android.content.Intent;
 
+/*
+ * Simple Pojo class for RecipeItem
+ */
 public class RecipeItem {
 
 	public static final String ITEM_SEP = System.getProperty("line.separator");
@@ -36,19 +39,6 @@ public class RecipeItem {
 		this.mPictureBlob = blob;
 		this.mDate = date;
 		this.mSteps = new ArrayList<>();
-	}
-
-	// Create a new RecipeItem from data packaged in an Intent
-	RecipeItem(Intent intent) {
-		mTitle = intent.getStringExtra(RecipeItem.TITLE);
-		mDescription = intent.getStringExtra(RecipeItem.DESCRIPTION);
-		mIngredients = intent.getStringExtra(RecipeItem.INGREDIENTS);
-
-		try {
-			mDate = RecipeItem.FORMAT.parse(intent.getStringExtra(RecipeItem.DATE));
-		} catch (Exception e) {
-			mDate = new Date();
-		}
 	}
 
 	public long getId() {
@@ -99,28 +89,8 @@ public class RecipeItem {
 		mSteps.add(step);
 	}
 
-	public void updateStep(int position, StepItem step) {
-		mSteps.set(position, step);
-	}
-
-	// Take a set of String data values and package them for transport in an Intent
-	public static void packageIntent(Intent intent, String title,
-			String description, String ingredients, String date) {
-		intent.putExtra(RecipeItem.TITLE, title);
-		intent.putExtra(RecipeItem.DESCRIPTION, description);
-		intent.putExtra(RecipeItem.INGREDIENTS, ingredients);
-		intent.putExtra(RecipeItem.DATE, date);
-	}
-
 	public String toString() {
 		return mTitle + ITEM_SEP + mDescription + ITEM_SEP + mIngredients + ITEM_SEP
 				+ FORMAT.format(mDate);
 	}
-
-	public String toLog() {
-		return "Title:" + mTitle + ITEM_SEP + "Description:" + mDescription
-				+ ITEM_SEP + "Ingredients:" + mIngredients + ITEM_SEP + "Date:"
-				+ FORMAT.format(mDate);
-	}
-
 }

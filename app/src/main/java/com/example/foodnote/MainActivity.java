@@ -86,8 +86,6 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_fullscreen);
 
-        //mRecipeEditorAction = RecipeEditorAction.None;
-
         addRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_add_recipe);
         viewRecipeRightRL = (RelativeLayout)findViewById(R.id.drawer_right_view_recipe);
         drawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
@@ -128,6 +126,7 @@ public class MainActivity extends Activity {
         mRecipeAddIngredients.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
+                // Send the entered ingredients whenever focus leaves the Ingredients section
                 if (!hasFocus) {
                     mAddStepAdapter.setIngredients(
                             mRecipeAddIngredients.getText().toString().split("[ ]*,[ ]*"));
@@ -174,13 +173,16 @@ public class MainActivity extends Activity {
                 recipeViewDescriptionText.setText(recipeItem.getDescription());
 
                 TextView recipeViewIngredientsText = (TextView) findViewById(R.id.recipeViewIngredients);
-                recipeViewIngredientsText.setText("Ingredients: " + recipeItem.getIngredients());
+                recipeViewIngredientsText.setText(
+                        getResources().getString(R.string.ingredients_prefix_string)
+                        + " " + recipeItem.getIngredients());
 
                 ImageView recipeViewPicture = (ImageView) findViewById(R.id.recipeViewPicture);
                 byte[] blob = recipeItem.getPictureBlob();
                 if (blob != null) {
                     recipeViewPicture.setImageBitmap(BitmapFactory.decodeByteArray(blob, 0, blob.length));
                 } else {
+                    // If no picture was set yet, set the placeholder image
                     recipeViewPicture.setImageDrawable(
                             ContextCompat.getDrawable(getApplicationContext(), R.drawable.taco128));
                 }
@@ -193,7 +195,7 @@ public class MainActivity extends Activity {
                         RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION,
                 };
 
-                // Sort by decreasing order of date
+                // Sort by step numbers
                 String sortOrder = RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + " ASC";
 
                 Cursor c = null;
@@ -275,6 +277,10 @@ public class MainActivity extends Activity {
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), IMAGE_CHOOSE_REQ_CODE);
     }
 
+    /*
+     *  Decode the image from Uri and scale it to fit size and prevent from eating
+     *  too much memory
+     */
     private Bitmap decodeUri(Uri selectedImage) throws FileNotFoundException {
         // Decode image size
 
@@ -336,6 +342,8 @@ public class MainActivity extends Activity {
     }
 
     public void onSubmitButtonClicked(View view) throws RuntimeException {
+
+        // Do not submit with empty title
         if (mRecipeAddTitleText.getText().length() == 0) {
             Toast.makeText(getApplicationContext(),
                     "Recipe title missing",
@@ -343,6 +351,7 @@ public class MainActivity extends Activity {
             return;
         }
 
+        // Compress the uploaded picture to insert into db
         byte[] compressedPicture = null;
         if (mPictureBitmap != null) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -368,6 +377,7 @@ public class MainActivity extends Activity {
                 new Date());
 
         try {
+            // Remove all empty steps before inserting to db
             for (int stepIndex=0; stepIndex<mAddStepAdapter.getCount(); stepIndex++) {
                 if (mAddStepAdapter.getItem(stepIndex).getIsSubmitted()) {
                     recipeItem.addStep(mAddStepAdapter.getItem(stepIndex));
@@ -376,7 +386,7 @@ public class MainActivity extends Activity {
                     stepIndex--;
                 }
             }
-            insertRecipeDataToDb(recipeItem);
+            mDbHelper.insertRecipeDataToDb(recipeItem);
 
             Toast.makeText(getApplicationContext(),
                     "Successfully saved the recipe for \"" + mRecipeAddTitleText.getText().toString() + "\"",
@@ -469,9 +479,10 @@ public class MainActivity extends Activity {
 
     private String stripFormattedIngredients(String formatted) {
         // For now, just remove the prefix label "Ingredients:"
-        return formatted.substring(13);
+        return formatted.substring(
+                getResources().getString(R.string.ingredients_prefix_string).length());
     }
-
+/*
     public void insertRecipeDataToDb(RecipeItem recipeItem) {
         // insert recipe data
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
@@ -536,7 +547,7 @@ public class MainActivity extends Activity {
             db.endTransaction();
         }
     }
-
+*/
     private void clearContents() {
         ActionStateSingleton.getInstance().setEditorAction(ActionStateSingleton.EditorAction.None);
         mRecipeAddTitleText.setText("");

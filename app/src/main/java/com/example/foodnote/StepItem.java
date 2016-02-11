@@ -1,5 +1,8 @@
 package com.example.foodnote;
 
+/*
+ *  Simple Pojo class for StepItem
+ */
 public class StepItem {
     private String step;
     private boolean isEditing;

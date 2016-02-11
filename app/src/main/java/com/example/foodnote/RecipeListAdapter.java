@@ -80,6 +80,7 @@ public class RecipeListAdapter extends BaseAdapter {
 			imageView.setImageBitmap(BitmapFactory.decodeByteArray(
 					recipeItem.getPictureBlob(), 0, recipeItem.getPictureBlob().length));
 		} else {
+			// If there's no image set, set as the placeholder image
 			imageView.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.taco128));
 		}
 

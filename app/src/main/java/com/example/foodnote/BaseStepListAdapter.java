@@ -7,6 +7,9 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
+ *  Base class for AddStepListAdapter and ViewStepListAdapter
+ */
 public abstract class BaseStepListAdapter extends BaseAdapter {
     private final List<StepItem> mItems = new ArrayList<>();
     Context mContext;

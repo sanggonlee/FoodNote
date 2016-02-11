@@ -1,11 +1,15 @@
 package com.example.foodnote;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 import com.example.foodnote.RecipeContract.RecipeEntry;
+
+import java.util.List;
 
 public class RecipeDbHelper extends SQLiteOpenHelper{
     public static final int DATABASE_VERSION = 1;
@@ -65,5 +69,70 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
         db.execSQL(SQL_DELETE_STEP_ENTRIES);
         db.execSQL(SQL_DELETE_INGREDIENTS_ENTRIES);
         onCreate(db);
+    }
+
+    public void insertRecipeDataToDb(RecipeItem recipeItem) {
+        // insert recipe data
+        SQLiteDatabase db = getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID, recipeItem.getId());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE, recipeItem.getTitle());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION, recipeItem.getDescription());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS, recipeItem.getIngredients());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE, recipeItem.getPictureBlob());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipeItem.getDate().getTime());
+
+        if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Create) {
+            db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
+        } else if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit) {
+            db.update(RecipeContract.RecipeEntry.TABLE_NAME,
+                    values,
+                    RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " + recipeItem.getId(),
+                    null);
+
+            // delete the existing steps for this recipe
+            db.delete(RecipeContract.StepEntry.TABLE_NAME,
+                    RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " + recipeItem.getId(),
+                    null);
+        }
+
+        // SQL statement for inserting ingredients data
+        String[] ingredients = recipeItem.getIngredients().split("[ ]*,[ ]*");
+        String ingredientInsertSqlQuery =
+                "INSERT OR IGNORE INTO " + RecipeContract.IngredientsEntry.TABLE_NAME + " (" +
+                        RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT +
+                        ") VALUES (?);";
+        SQLiteStatement ingredientInsertStatement = db.compileStatement(ingredientInsertSqlQuery);
+
+        // SQL statement for inserting steps data
+        List<StepItem> steps = recipeItem.getSteps();
+        String stepInsertSqlQuery = "INSERT INTO " + RecipeContract.StepEntry.TABLE_NAME + " (" +
+                RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + ", " +
+                RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + ", " +
+                RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION +
+                ") VALUES (?,?,?);";
+        SQLiteStatement stepInsertStatement = db.compileStatement(stepInsertSqlQuery);
+
+        // start db transaction for both ingredients and steps
+        try {
+            db.beginTransaction();
+            int index;
+            for (index = 0; index<ingredients.length; index++) {
+                ingredientInsertStatement.clearBindings();
+                ingredientInsertStatement.bindString(1, ingredients[index]);
+                ingredientInsertStatement.execute();
+            }
+            for (index = 0; index < steps.size(); index++) {
+                stepInsertStatement.clearBindings();
+                stepInsertStatement.bindLong(1, recipeItem.getId()); // recipe id
+                stepInsertStatement.bindLong(2, index);
+                stepInsertStatement.bindString(3, steps.get(index).getStep());
+                stepInsertStatement.execute();
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 }
