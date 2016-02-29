@@ -1,8 +1,10 @@
 package com.example.foodnote.backend.apis;
 
+import com.example.foodnote.backend.Constants;
 import com.example.foodnote.backend.OfyService;
 import com.example.foodnote.backend.models.Recipe;
 import com.google.api.server.spi.config.Api;
+import com.google.api.server.spi.config.ApiClass;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.api.server.spi.config.ApiNamespace;
 import com.google.api.server.spi.response.CollectionResponse;
@@ -31,6 +33,12 @@ import static com.example.foodnote.backend.OfyService.ofy;
                 ownerName = "apis.backend.foodnote.example.com",
                 packagePath = ""
         )
+)
+@ApiClass(resource = "recipes",
+        clientIds = {
+                Constants.ANDROID_CLIENT_ID,
+                Constants.WEB_CLIENT_ID},
+        audiences = {Constants.ANDROID_AUDIENCE_ID}
 )
 public class RecipeEndpoint {
 

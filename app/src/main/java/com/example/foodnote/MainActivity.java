@@ -1,5 +1,8 @@
 package com.example.foodnote;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
@@ -42,14 +45,27 @@ import android.widget.AdapterView.OnItemClickListener;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
+import com.example.foodnote.backend.apis.recipeApi.RecipeApi;
+import com.example.foodnote.backend.apis.recipeApi.model.Recipe;
+import com.google.android.gms.common.AccountPicker;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.extensions.android.json.AndroidJsonFactory;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.android.gms.auth.GoogleAuthUtil;
+
+
 public class MainActivity extends Activity {
-    public static final String PREFS = "Writing";
+    String TAG = "MainActivity";
+
     public static final int IMAGE_CHOOSE_REQ_CODE = 0;
 
-    String TAG = "MainActivity";
+    SharedPreferences sharedPreferences;
 
     RelativeLayout addRecipeRightRL;
     RelativeLayout viewRecipeRightRL;
@@ -76,6 +92,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
 
         // transparent action bar
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
@@ -138,10 +156,9 @@ public class MainActivity extends Activity {
         mPictureBitmap = null;
 
         /** Preferences call from last time before app close    By. CHAN */
-        SharedPreferences settings = getSharedPreferences(PREFS, 0);
-        unsavedTitle = settings.getString("unsavedTitle", "");
-        unsavedDescription = settings.getString("unsavedDescription", "");
-        unsavedIngredients = settings.getString("unsavedIngredients", "");
+        unsavedTitle = sharedPreferences.getString("unsavedTitle", "");
+        unsavedDescription = sharedPreferences.getString("unsavedDescription", "");
+        unsavedIngredients = sharedPreferences.getString("unsavedIngredients", "");
         mRecipeAddTitleText.setText(unsavedTitle);
         mRecipeAddDescription.setText(unsavedDescription);
         mRecipeAddIngredients.setText(unsavedIngredients);
@@ -175,7 +192,7 @@ public class MainActivity extends Activity {
                 TextView recipeViewIngredientsText = (TextView) findViewById(R.id.recipeViewIngredients);
                 recipeViewIngredientsText.setText(
                         getResources().getString(R.string.ingredients_prefix_string)
-                        + " " + recipeItem.getIngredients());
+                                + " " + recipeItem.getIngredients());
 
                 ImageView recipeViewPicture = (ImageView) findViewById(R.id.recipeViewPicture);
                 byte[] blob = recipeItem.getPictureBlob();
@@ -232,6 +249,20 @@ public class MainActivity extends Activity {
                 android.R.layout.simple_dropdown_item_1line);
         mRecipeAddIngredients.setAdapter(mIngredientsAdapter);
         mRecipeAddIngredients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
+
+        /*
+        // Api use demonstration!
+        RecipeApi.Builder builder = new RecipeApi.Builder(
+                AndroidHttp.newCompatibleTransport(),
+                new AndroidJsonFactory(),
+                null
+        );
+        RecipeApi api = builder.build();
+        try {
+            Recipe recipe = api.get(123L).execute();
+        } catch (IOException e) {
+
+        }*/
     }
 
     @Override
@@ -258,6 +289,12 @@ public class MainActivity extends Activity {
                 }
                 mRecipeAddTitleText.requestFocus();
                 drawerLayout.openDrawer(addRecipeRightRL);
+                return true;
+            case R.id.recipe_book:
+                return true;
+            case R.id.recipe_world:
+                Intent signInIntent = new Intent(MainActivity.this, SignInActivity.class);
+                startActivity(signInIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -653,8 +690,7 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
 
-        SharedPreferences settings = getSharedPreferences(PREFS, 0);
-        SharedPreferences.Editor editor = settings.edit();
+        SharedPreferences.Editor editor = sharedPreferences.edit();
         unsavedTitle = mRecipeAddTitleText.getText().toString();
         unsavedDescription = mRecipeAddDescription.getText().toString();
         unsavedIngredients = mRecipeAddIngredients.getText().toString();

@@ -10,6 +10,8 @@ import java.util.List;
 public class Recipe {
     @Id
     private Long id;
+    private Long authorId;
+    private String authorName;
     private String title;
     private String description;
     private String ingredients;
@@ -22,6 +24,22 @@ public class Recipe {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
+    }
+
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
     }
 
     public String getTitle() {

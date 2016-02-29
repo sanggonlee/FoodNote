@@ -4,6 +4,16 @@
     tools:context="com.example.foodnote.FoodNoteManagerActivity"
     >
 
+    <item android:id="@+id/recipe_book"
+        android:icon="@drawable/book"
+        android:title="@string/browse_recipe_book"
+        android:showAsAction="always" />
+
+    <item android:id="@+id/recipe_world"
+        android:icon="@drawable/world"
+        android:title="@string/browse_recipe_world"
+        android:showAsAction="always" />
+
     <item android:id="@+id/action_compose"
         android:icon="@drawable/plus"
         android:title="@string/add_new_recipe_string"

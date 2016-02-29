@@ -188,6 +188,14 @@
                     android:dividerHeight="0dp"
                     android:descendantFocusability="beforeDescendants" />
 
+                <!-- Checkbox for uploading to cloud -->
+                <CheckBox
+                    android:id="@+id/recipeAddUploadToCloudCheckbox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/recipeAddStepsList"
+                    android:text="@string/upload_to_recipe_world_option" />
+
                 <!-- Buttons -->
 
                 <Button
@@ -200,7 +208,7 @@
                     android:layout_alignParentStart="true"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:layout_below="@id/recipeAddStepsList"
+                    android:layout_below="@id/recipeAddUploadToCloudCheckbox"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/hide_string"
@@ -215,7 +223,7 @@
                     android:layout_centerHorizontal="true"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:layout_below="@id/recipeAddStepsList"
+                    android:layout_below="@id/recipeAddUploadToCloudCheckbox"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/cancel_string"
@@ -231,7 +239,7 @@
                     android:layout_alignParentEnd="true"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:layout_below="@id/recipeAddStepsList"
+                    android:layout_below="@id/recipeAddUploadToCloudCheckbox"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
                     android:text="@string/submit_string"
