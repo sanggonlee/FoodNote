@@ -10,14 +10,64 @@ import java.util.List;
 public class Recipe {
     @Id
     private Long id;
-    private Long authorId;
+    private String authorId;
     private String authorName;
     private String title;
     private String description;
     private String ingredients;
-    private List<Long> stepIds;
+    private List<String> steps;
     private Date date;
 
+    public static class Builder {
+        private final String title;
+
+        private String description;
+        private String ingredients;
+        private List<String> steps;
+
+        public Builder(String title) {
+            this.title = title;
+        }
+
+        public Builder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public Builder ingredients(String ingredients) {
+            this.ingredients = ingredients;
+            return this;
+        }
+
+        public Builder steps(List<String> steps) {
+            this.steps = steps;
+            return this;
+        }
+
+        public Recipe build() {
+            return new Recipe(this);
+        }
+    }
+
+    /*
+     *  No-arg constructor must be supplied for GAE entity
+     */
+    private Recipe() {
+    }
+
+    /*
+     *  Constructor using Builder
+     */
+    private Recipe(Builder builder) {
+        title = builder.title;
+        description = builder.description;
+        ingredients = builder.ingredients;
+        steps = builder.steps;
+    }
+
+    /*
+     *  Getters and setters
+     */
     public Long getId() {
         return id;
     }
@@ -26,11 +76,11 @@ public class Recipe {
         this.id = id;
     }
 
-    public Long getAuthorId() {
+    public String getAuthorId() {
         return authorId;
     }
 
-    public void setAuthorId(Long authorId) {
+    public void setAuthorId(String authorId) {
         this.authorId = authorId;
     }
 
@@ -46,32 +96,16 @@ public class Recipe {
         return title;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getIngredients() {
         return ingredients;
     }
 
-    public void setIngredients(String ingredients) {
-        this.ingredients = ingredients;
-    }
-
-    public List<Long> getStepIds() {
-        return stepIds;
-    }
-
-    public void setStepIds(List<Long> stepIds) {
-        this.stepIds = stepIds;
+    public List<String> getSteps() {
+        return steps;
     }
 
     public Date getDate() {
@@ -80,5 +114,9 @@ public class Recipe {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public void something() {
+        return;
     }
 }

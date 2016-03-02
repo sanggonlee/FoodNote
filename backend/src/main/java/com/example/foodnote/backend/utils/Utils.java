@@ -18,7 +18,7 @@ public class Utils {
      * @param user A User object injected by the cloud endpoints.
      * @return the App Engine userId for the user.
      */
-    private static String getUserId(User user) {
+    public static String getUserId(User user) {
         String userId = user.getUserId();
         if (userId == null) {
             LOG.info("userId is null, so trying to obtain it from the datastore.");

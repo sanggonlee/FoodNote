@@ -11,7 +11,6 @@ public class OfyService {
 
     static {
         ObjectifyService.register(Recipe.class);
-        ObjectifyService.register(Step.class);
     }
 
     public static Objectify ofy() {

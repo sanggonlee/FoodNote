@@ -18,6 +18,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -33,6 +34,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -46,6 +48,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -293,8 +296,55 @@ public class MainActivity extends Activity {
             case R.id.recipe_book:
                 return true;
             case R.id.recipe_world:
+
+                /**************** TEMPORARY PLAYGROUND ****************/
+                /*AccountManager am = AccountManager.get(this);
+                Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+
+                AccountManagerFuture<Bundle> future = am.getAuthToken(accounts[0], "oauth2:https://mail.google.com/",
+                        true, null, null);
+                Bundle result = null;
+                try {
+                    result = future.getResult();
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+                String authToken = "";
+                if (future.isDone() && !future.isCancelled()) {
+                    authToken = result.getString(AccountManager.KEY_AUTHTOKEN);
+                }
+                Log.i(TAG, "Got Auth Token: "+authToken);
+                */
+
+
+                //int numOfAccount = accounts.length;
+
                 Intent signInIntent = new Intent(MainActivity.this, SignInActivity.class);
                 startActivity(signInIntent);
+                /*GoogleAccountCredential credential;
+                credential = GoogleAccountCredential.usingAudience(this, "server:client_id:" + "");
+                startActivityForResult(credential.newChooseAccountIntent(), 1);*/
+                /*
+                switch (numOfAccount) {
+                    case 0:
+                        Log.i(TAG, "no accounts");
+                        break;
+                    case 1:
+                        Log.i(TAG, "one account: "+accounts[0].name);
+
+                        //performAuthCheck(mEmailAccount);
+                        break;
+                    default:
+                        // More than one Google Account is present, a chooser is necessary.
+                        // Invoke an {@code Intent} to allow the user to select a Google account.
+                        Log.i(TAG, "many accounts");
+                        Intent accountSelector = AccountPicker.newChooseAccountIntent(null, null,
+                                new String[]{GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE}, false,
+                                "select_account_for_access", null, null, null);
+                        startActivityForResult(accountSelector, 2222);
+                }*/
+                /******************************************************/
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -413,16 +463,20 @@ public class MainActivity extends Activity {
                 compressedPicture,
                 new Date());
 
+        List<String> steps = new ArrayList<String>();
         try {
             // Remove all empty steps before inserting to db
             for (int stepIndex=0; stepIndex<mAddStepAdapter.getCount(); stepIndex++) {
                 if (mAddStepAdapter.getItem(stepIndex).getIsSubmitted()) {
                     recipeItem.addStep(mAddStepAdapter.getItem(stepIndex));
+                    steps.add(mAddStepAdapter.getItem(stepIndex).getStep());
                 } else {
                     mAddStepAdapter.remove(stepIndex);
                     stepIndex--;
                 }
             }
+            //recipeItem.setSteps
+
             mDbHelper.insertRecipeDataToDb(recipeItem);
 
             Toast.makeText(getApplicationContext(),
@@ -434,6 +488,18 @@ public class MainActivity extends Activity {
                     "Recipe save failed. Please try again.",
                     Toast.LENGTH_LONG).show();
             return; // don't clear the contents if unsuccessful
+        }
+
+        Recipe recipe = new Recipe();
+                recipe.setTitle(recipeItem.getTitle());
+                recipe.setDescription(recipeItem.getDescription());
+                recipe.setIngredients(recipeItem.getIngredients());
+        recipe.something();
+
+        CheckBox cloudUploadCheckbox = (CheckBox)findViewById(R.id.recipeAddUploadToCloudCheckbox);
+        if (cloudUploadCheckbox.isChecked()) {
+            RecipeSaveAsyncTask task = new RecipeSaveAsyncTask();
+            task.execute(recipe);
         }
 
         clearContents();
@@ -700,6 +766,35 @@ public class MainActivity extends Activity {
         editor.commit();
     }
     /***/
+
+    private class RecipeSaveAsyncTask extends AsyncTask<Recipe, Void, Recipe> {
+
+        @Override
+        protected Recipe doInBackground(Recipe... param) {
+            Recipe recipe = param[0];
+
+            RecipeApi recipeApi = CloudEndpointBuilderHelper.getRecipeEndpoints();
+
+            try {
+                return recipeApi.insert(recipe).execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Recipe result) {
+            String msg;
+            if (result != null) {
+                msg = "Successfully submitted the recipe to Recipe World.";
+                Log.i(TAG, "user nickname = "+result.getAuthorName());
+            } else {
+                msg = "Could not upload to the server. Please try again.";
+            }
+            Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+        }
+    }
 
     public class SwipeDetector implements View.OnTouchListener {
         private Activity activity;

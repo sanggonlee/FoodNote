@@ -64,6 +64,10 @@ public class SignInActivity extends AppCompatActivity {
         });
     }
 
+    public static GoogleAccountCredential getCredential() {
+        return credential;
+    }
+
     /*
      *  Check if the user is signed in by trying to retrieve information
      *  from shared preferences

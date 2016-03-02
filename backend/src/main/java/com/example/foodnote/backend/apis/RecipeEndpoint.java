@@ -3,6 +3,7 @@ package com.example.foodnote.backend.apis;
 import com.example.foodnote.backend.Constants;
 import com.example.foodnote.backend.OfyService;
 import com.example.foodnote.backend.models.Recipe;
+import com.example.foodnote.backend.utils.Utils;
 import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiClass;
 import com.google.api.server.spi.config.ApiMethod;
@@ -11,6 +12,7 @@ import com.google.api.server.spi.response.CollectionResponse;
 import com.google.api.server.spi.response.NotFoundException;
 import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.QueryResultIterator;
+import com.google.appengine.api.users.User;
 import com.googlecode.objectify.Objectify;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.cmd.Query;
@@ -73,12 +75,16 @@ public class RecipeEndpoint {
             name = "insert",
             path = "recipe",
             httpMethod = ApiMethod.HttpMethod.POST)
-    public Recipe insert(Recipe recipe) {
+    public Recipe insert(final User user, Recipe recipe) {
         // Typically in a RESTful API a POST does not have a known ID (assuming the ID is used in the resource path).
         // You should validate that recipe.id has not been set. If the ID type is not supported by the
         // Objectify ID generator, e.g. long or String, then you should generate the unique ID yourself prior to saving.
         //
         // If your client provides the ID then you should probably use PUT instead.
+
+        recipe.setAuthorId(Utils.getUserId(user));
+        recipe.setAuthorName(user.getEmail());
+
         ofy().save().entity(recipe).now();
         logger.info("Created Recipe with ID: " + recipe.getId());
 
