@@ -28,18 +28,18 @@ import static com.example.foodnote.backend.OfyService.ofy;
 
 @Api(
         name = "recipeApi",
-        version = "v1",
+        version = "v2",
         resource = "recipe",
         namespace = @ApiNamespace(
                 ownerDomain = "apis.backend.foodnote.example.com",
                 ownerName = "apis.backend.foodnote.example.com",
                 packagePath = ""
-        )
-)
-@ApiClass(resource = "recipes",
+        ),
+        scopes = {Constants.EMAIL_SCOPE},
         clientIds = {
                 Constants.ANDROID_CLIENT_ID,
-                Constants.WEB_CLIENT_ID},
+                Constants.WEB_CLIENT_ID,
+                Constants.API_EXPLORER_CLIENT_ID},
         audiences = {Constants.ANDROID_AUDIENCE_ID}
 )
 public class RecipeEndpoint {
@@ -82,6 +82,7 @@ public class RecipeEndpoint {
         //
         // If your client provides the ID then you should probably use PUT instead.
 
+        logger.info("Setting author info before creating recipe");
         recipe.setAuthorId(Utils.getUserId(user));
         recipe.setAuthorName(user.getEmail());
 

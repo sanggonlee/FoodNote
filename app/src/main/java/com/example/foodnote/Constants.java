@@ -9,4 +9,9 @@ public class Constants {
             "https://polar-elevator-122617.appspot.com/_ah/api";
 
     static final String PREFS_NAME = "FoodNote";
+
+    /*
+     *  Key for the currently signed in account for the shared preferences
+     */
+    static final String ACCOUNT_NAME_SETTINGS_NAME = "accountName";
 }

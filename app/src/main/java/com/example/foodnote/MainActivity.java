@@ -5,6 +5,7 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -35,6 +36,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -61,14 +63,18 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.api.client.util.DateTime;
 
 
 public class MainActivity extends Activity {
     String TAG = "MainActivity";
 
-    public static final int IMAGE_CHOOSE_REQ_CODE = 0;
+    private static final int IMAGE_CHOOSE_REQ_CODE = 0;
+    private static final int SIGN_IN_REQ_CODE = 1;
 
     SharedPreferences sharedPreferences;
+
+    String savedUserName;
 
     RelativeLayout addRecipeRightRL;
     RelativeLayout viewRecipeRightRL;
@@ -253,19 +259,23 @@ public class MainActivity extends Activity {
         mRecipeAddIngredients.setAdapter(mIngredientsAdapter);
         mRecipeAddIngredients.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
 
-        /*
-        // Api use demonstration!
-        RecipeApi.Builder builder = new RecipeApi.Builder(
-                AndroidHttp.newCompatibleTransport(),
-                new AndroidJsonFactory(),
-                null
-        );
-        RecipeApi api = builder.build();
-        try {
-            Recipe recipe = api.get(123L).execute();
-        } catch (IOException e) {
+        final CheckBox cloudUploadCheckbox = (CheckBox)findViewById(R.id.recipeAddUploadToCloudCheckbox);
+        cloudUploadCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // Show dialog just in case starting activity takes longer than usual
+                    ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
+                    progressDialog.setMessage("Checking user information..");
+                    progressDialog.show();
 
-        }*/
+                    Intent signInIntent = new Intent(MainActivity.this, SignInActivity.class);
+                    startActivityForResult(signInIntent, SIGN_IN_REQ_CODE);
+
+                    progressDialog.dismiss();
+                }
+            }
+        });
     }
 
     @Override
@@ -320,7 +330,7 @@ public class MainActivity extends Activity {
                 //int numOfAccount = accounts.length;
 
                 Intent signInIntent = new Intent(MainActivity.this, SignInActivity.class);
-                startActivity(signInIntent);
+                startActivityForResult(signInIntent, SIGN_IN_REQ_CODE);
                 /*GoogleAccountCredential credential;
                 credential = GoogleAccountCredential.usingAudience(this, "server:client_id:" + "");
                 startActivityForResult(credential.newChooseAccountIntent(), 1);*/
@@ -415,6 +425,10 @@ public class MainActivity extends Activity {
                             Toast.LENGTH_LONG).show();
                 }
             }
+        } else if (requestCode == SIGN_IN_REQ_CODE) {
+            if (resultCode == RESULT_OK) {
+                savedUserName = sharedPreferences.getString(Constants.ACCOUNT_NAME_SETTINGS_NAME, null);
+            }
         }
     }
 
@@ -429,6 +443,7 @@ public class MainActivity extends Activity {
     }
 
     public void onSubmitButtonClicked(View view) throws RuntimeException {
+        Log.i(TAG, "submit button clicked");
 
         // Do not submit with empty title
         if (mRecipeAddTitleText.getText().length() == 0) {
@@ -463,7 +478,7 @@ public class MainActivity extends Activity {
                 compressedPicture,
                 new Date());
 
-        List<String> steps = new ArrayList<String>();
+        List<String> steps = new ArrayList<>();
         try {
             // Remove all empty steps before inserting to db
             for (int stepIndex=0; stepIndex<mAddStepAdapter.getCount(); stepIndex++) {
@@ -475,8 +490,6 @@ public class MainActivity extends Activity {
                     stepIndex--;
                 }
             }
-            //recipeItem.setSteps
-
             mDbHelper.insertRecipeDataToDb(recipeItem);
 
             Toast.makeText(getApplicationContext(),
@@ -490,14 +503,17 @@ public class MainActivity extends Activity {
             return; // don't clear the contents if unsuccessful
         }
 
+        Log.i(TAG, "creating recipe");
         Recipe recipe = new Recipe();
-                recipe.setTitle(recipeItem.getTitle());
-                recipe.setDescription(recipeItem.getDescription());
-                recipe.setIngredients(recipeItem.getIngredients());
-        recipe.something();
+        recipe.setTitle(recipeItem.getTitle());
+        recipe.setDescription(recipeItem.getDescription());
+        recipe.setIngredients(recipeItem.getIngredients());
+        recipe.setImageData(compressedPicture == null ? null : new String(compressedPicture));
+        recipe.setSteps(steps);
 
         CheckBox cloudUploadCheckbox = (CheckBox)findViewById(R.id.recipeAddUploadToCloudCheckbox);
         if (cloudUploadCheckbox.isChecked()) {
+            Log.i(TAG, "starting task");
             RecipeSaveAsyncTask task = new RecipeSaveAsyncTask();
             task.execute(recipe);
         }
@@ -745,6 +761,9 @@ public class MainActivity extends Activity {
     public void onResume() {
         super.onResume();
 
+        // Retrieve user info if available
+        savedUserName = sharedPreferences.getString(Constants.ACCOUNT_NAME_SETTINGS_NAME, null);
+
         // Load saved RecipeItems, if necessary
         if (mAdapter.getCount() == 0) {
             loadItems();
@@ -768,14 +787,17 @@ public class MainActivity extends Activity {
     /***/
 
     private class RecipeSaveAsyncTask extends AsyncTask<Recipe, Void, Recipe> {
+        private final String TAG = RecipeSaveAsyncTask.class.getSimpleName();
 
         @Override
         protected Recipe doInBackground(Recipe... param) {
+            Log.i(TAG, "doInBackground entered");
             Recipe recipe = param[0];
 
             RecipeApi recipeApi = CloudEndpointBuilderHelper.getRecipeEndpoints();
 
             try {
+                Log.i(TAG, "going into api");
                 return recipeApi.insert(recipe).execute();
             } catch (IOException e) {
                 e.printStackTrace();

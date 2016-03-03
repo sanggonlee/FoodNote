@@ -19,6 +19,10 @@ public class Utils {
      * @return the App Engine userId for the user.
      */
     public static String getUserId(User user) {
+        if (user == null) {
+            LOG.warning("Got a null user! Investigate!");
+            return "";
+        }
         String userId = user.getUserId();
         if (userId == null) {
             LOG.info("userId is null, so trying to obtain it from the datastore.");

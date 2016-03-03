@@ -1,5 +1,6 @@
 package com.example.foodnote.backend.models;
 
+import com.google.appengine.api.datastore.Blob;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 
@@ -15,6 +16,7 @@ public class Recipe {
     private String title;
     private String description;
     private String ingredients;
+    private Blob imageData;
     private List<String> steps;
     private Date date;
 
@@ -96,18 +98,42 @@ public class Recipe {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getIngredients() {
         return ingredients;
     }
 
+    public void setIngredients(String ingredients) {
+        this.ingredients = ingredients;
+    }
+
+    public Blob getImageData() {
+        return imageData;
+    }
+
+    public void setImageData(byte[] byteArray) {
+        this.imageData = new Blob(byteArray);
+    }
+
     public List<String> getSteps() {
         return steps;
     }
-
+/*
+    public void setSteps(List<String> steps) {
+        this.steps = steps;
+    }
+*/
     public Date getDate() {
         return date;
     }

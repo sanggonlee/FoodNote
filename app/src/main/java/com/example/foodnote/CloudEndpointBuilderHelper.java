@@ -1,5 +1,7 @@
 package com.example.foodnote;
 
+import android.util.Log;
+
 import com.example.foodnote.backend.apis.recipeApi.RecipeApi;
 import com.example.foodnote.backend.apis.stepApi.StepApi;
 import com.google.api.client.extensions.android.http.AndroidHttp;

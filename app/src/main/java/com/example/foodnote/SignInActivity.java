@@ -18,11 +18,6 @@ public class SignInActivity extends AppCompatActivity {
     private static final String TAG = SignInActivity.class.getSimpleName();
 
     /*
-     *  Key for the currently signed in account for the shared preferences
-     */
-    private static final String ACCOUNT_NAME_SETTINGS_NAME = "accountName";
-
-    /*
      *  Request codes
      */
     private static final int REQUEST_ACCOUNT_PICKER = 1;
@@ -74,7 +69,7 @@ public class SignInActivity extends AppCompatActivity {
      */
     private boolean isSignedIn() {
         credential = GoogleAccountCredential.usingAudience(this, Constants.ANDROID_AUDIENCE_ID);
-        String accountName = sharedPreferences.getString(ACCOUNT_NAME_SETTINGS_NAME, null);
+        String accountName = sharedPreferences.getString(Constants.ACCOUNT_NAME_SETTINGS_NAME, null);
         credential.setSelectedAccountName(accountName);
         return credential.getSelectedAccount() != null;
     }
@@ -95,8 +90,10 @@ public class SignInActivity extends AppCompatActivity {
         if (requestCode == REQUEST_ACCOUNT_PICKER) {
             if (resultCode == RESULT_OK) {
                 sharedPreferences.edit()
-                        .putString(ACCOUNT_NAME_SETTINGS_NAME, data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME))
+                        .putString(Constants.ACCOUNT_NAME_SETTINGS_NAME,
+                                data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME))
                         .apply();
+                finish();
             }
         }
     }
