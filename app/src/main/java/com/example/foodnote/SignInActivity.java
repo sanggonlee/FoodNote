@@ -89,10 +89,12 @@ public class SignInActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ACCOUNT_PICKER) {
             if (resultCode == RESULT_OK) {
+                String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+
                 sharedPreferences.edit()
-                        .putString(Constants.ACCOUNT_NAME_SETTINGS_NAME,
-                                data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME))
+                        .putString(Constants.ACCOUNT_NAME_SETTINGS_NAME, accountName)
                         .apply();
+                credential.setSelectedAccountName(accountName);
                 finish();
             }
         }

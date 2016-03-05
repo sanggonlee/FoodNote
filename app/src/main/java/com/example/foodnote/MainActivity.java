@@ -1,19 +1,14 @@
 package com.example.foodnote;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteStatement;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -21,9 +16,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -56,15 +53,6 @@ import java.util.List;
 
 import com.example.foodnote.backend.apis.recipeApi.RecipeApi;
 import com.example.foodnote.backend.apis.recipeApi.model.Recipe;
-import com.google.android.gms.common.AccountPicker;
-import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.extensions.android.json.AndroidJsonFactory;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.android.gms.auth.GoogleAuthUtil;
-import com.google.api.client.util.DateTime;
-
 
 public class MainActivity extends Activity {
     String TAG = "MainActivity";
@@ -73,8 +61,6 @@ public class MainActivity extends Activity {
     private static final int SIGN_IN_REQ_CODE = 1;
 
     SharedPreferences sharedPreferences;
-
-    String savedUserName;
 
     RelativeLayout addRecipeRightRL;
     RelativeLayout viewRecipeRightRL;
@@ -106,7 +92,9 @@ public class MainActivity extends Activity {
 
         // transparent action bar
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
-        getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+        if (getActionBar() != null) {
+            getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+        }
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -306,55 +294,8 @@ public class MainActivity extends Activity {
             case R.id.recipe_book:
                 return true;
             case R.id.recipe_world:
-
-                /**************** TEMPORARY PLAYGROUND ****************/
-                /*AccountManager am = AccountManager.get(this);
-                Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
-
-                AccountManagerFuture<Bundle> future = am.getAuthToken(accounts[0], "oauth2:https://mail.google.com/",
-                        true, null, null);
-                Bundle result = null;
-                try {
-                    result = future.getResult();
-                } catch (Exception e) {
-                    Log.e(TAG, e.getMessage());
-                }
-                String authToken = "";
-                if (future.isDone() && !future.isCancelled()) {
-                    authToken = result.getString(AccountManager.KEY_AUTHTOKEN);
-                }
-                Log.i(TAG, "Got Auth Token: "+authToken);
-                */
-
-
-                //int numOfAccount = accounts.length;
-
                 Intent signInIntent = new Intent(MainActivity.this, SignInActivity.class);
                 startActivityForResult(signInIntent, SIGN_IN_REQ_CODE);
-                /*GoogleAccountCredential credential;
-                credential = GoogleAccountCredential.usingAudience(this, "server:client_id:" + "");
-                startActivityForResult(credential.newChooseAccountIntent(), 1);*/
-                /*
-                switch (numOfAccount) {
-                    case 0:
-                        Log.i(TAG, "no accounts");
-                        break;
-                    case 1:
-                        Log.i(TAG, "one account: "+accounts[0].name);
-
-                        //performAuthCheck(mEmailAccount);
-                        break;
-                    default:
-                        // More than one Google Account is present, a chooser is necessary.
-                        // Invoke an {@code Intent} to allow the user to select a Google account.
-                        Log.i(TAG, "many accounts");
-                        Intent accountSelector = AccountPicker.newChooseAccountIntent(null, null,
-                                new String[]{GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE}, false,
-                                "select_account_for_access", null, null, null);
-                        startActivityForResult(accountSelector, 2222);
-                }*/
-                /******************************************************/
-
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -375,36 +316,21 @@ public class MainActivity extends Activity {
     }
 
     /*
-     *  Decode the image from Uri and scale it to fit size and prevent from eating
+     *  Decode the image from Uri, fix its size and prevent from eating
      *  too much memory
      */
     private Bitmap decodeUri(Uri selectedImage) throws FileNotFoundException {
-        // Decode image size
+        final int FIXED_IMAGE_WIDTH = 300;
+        final int FIXED_IMAGE_HEIGHT = 225;
 
-        BitmapFactory.Options o = new BitmapFactory.Options();
-        o.inJustDecodeBounds = true;
-        BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImage), null, o);
-
-        // The new size we want to scale to
-        final int REQUIRED_SIZE = 140;
-
-        // Find the correct scale value. It should be the power of 2.
-        int width_tmp = o.outWidth, height_tmp = o.outHeight;
-        int scale = 1;
-        while (true) {
-            if (width_tmp / 2 < REQUIRED_SIZE
-                    || height_tmp / 2 < REQUIRED_SIZE) {
-                break;
-            }
-            width_tmp /= 2;
-            height_tmp /= 2;
-            scale *= 2;
+        try {
+            return Bitmap.createScaledBitmap(
+                    MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage),
+                    FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT, true);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        // Decode with inSampleSize
-        BitmapFactory.Options o2 = new BitmapFactory.Options();
-        o2.inSampleSize = scale;
-        return BitmapFactory.decodeStream(getContentResolver().openInputStream(selectedImage), null, o2);
+        return null;
     }
 
     @Override
@@ -416,6 +342,7 @@ public class MainActivity extends Activity {
                 Uri imageUri = data.getData();
                 try {
                     mPictureBitmap = decodeUri(imageUri);
+                    Log.i(TAG, "bitmap size = "+ mPictureBitmap.getByteCount());
                     mPictureButton.setBackgroundResource(0);
                     mPictureButton.setImageBitmap(mPictureBitmap);
                 } catch (Exception e) {
@@ -427,7 +354,7 @@ public class MainActivity extends Activity {
             }
         } else if (requestCode == SIGN_IN_REQ_CODE) {
             if (resultCode == RESULT_OK) {
-                savedUserName = sharedPreferences.getString(Constants.ACCOUNT_NAME_SETTINGS_NAME, null);
+                // could save user info, but not needed at this scope for now
             }
         }
     }
@@ -508,7 +435,9 @@ public class MainActivity extends Activity {
         recipe.setTitle(recipeItem.getTitle());
         recipe.setDescription(recipeItem.getDescription());
         recipe.setIngredients(recipeItem.getIngredients());
-        recipe.setImageData(compressedPicture == null ? null : new String(compressedPicture));
+        if (compressedPicture != null) {
+            recipe.setImageData(Base64.encodeToString(compressedPicture, Base64.DEFAULT));
+        }
         recipe.setSteps(steps);
 
         CheckBox cloudUploadCheckbox = (CheckBox)findViewById(R.id.recipeAddUploadToCloudCheckbox);
@@ -761,9 +690,6 @@ public class MainActivity extends Activity {
     public void onResume() {
         super.onResume();
 
-        // Retrieve user info if available
-        savedUserName = sharedPreferences.getString(Constants.ACCOUNT_NAME_SETTINGS_NAME, null);
-
         // Load saved RecipeItems, if necessary
         if (mAdapter.getCount() == 0) {
             loadItems();
@@ -792,6 +718,10 @@ public class MainActivity extends Activity {
         @Override
         protected Recipe doInBackground(Recipe... param) {
             Log.i(TAG, "doInBackground entered");
+            if (param[0] == null) {
+                Log.w(TAG, "Recipe for RecipeSaveAsyncTask is null!");
+                return null;
+            }
             Recipe recipe = param[0];
 
             RecipeApi recipeApi = CloudEndpointBuilderHelper.getRecipeEndpoints();

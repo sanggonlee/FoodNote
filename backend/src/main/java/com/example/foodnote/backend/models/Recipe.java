@@ -16,7 +16,7 @@ public class Recipe {
     private String title;
     private String description;
     private String ingredients;
-    private Blob imageData;
+    private byte[] imageData;
     private List<String> steps;
     private Date date;
 
@@ -118,12 +118,12 @@ public class Recipe {
         this.ingredients = ingredients;
     }
 
-    public Blob getImageData() {
+    public byte[] getImageData() {
         return imageData;
     }
 
     public void setImageData(byte[] byteArray) {
-        this.imageData = new Blob(byteArray);
+        this.imageData = byteArray;
     }
 
     public List<String> getSteps() {
