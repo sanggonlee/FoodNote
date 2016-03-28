@@ -18,8 +18,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
@@ -53,14 +56,17 @@ import java.util.List;
 
 import com.example.foodnote.backend.apis.recipeApi.RecipeApi;
 import com.example.foodnote.backend.apis.recipeApi.model.Recipe;
+import com.google.api.client.util.DateTime;
 
-public class MainActivity extends Activity {
+public class MainActivity extends FragmentActivity implements LoaderManager.LoaderCallbacks<List<Recipe>> {
     String TAG = "MainActivity";
 
     private static final int IMAGE_CHOOSE_REQ_CODE = 0;
     private static final int SIGN_IN_REQ_CODE = 1;
 
     SharedPreferences sharedPreferences;
+
+    Loader<List<Recipe>> mLoader;
 
     RelativeLayout addRecipeRightRL;
     RelativeLayout viewRecipeRightRL;
@@ -178,7 +184,14 @@ public class MainActivity extends Activity {
         recipeListView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                RecipeItem recipeItem = (RecipeItem) parent.getItemAtPosition(position);
+                Recipe recipeItem = (Recipe)parent.getItemAtPosition(position);
+
+                if (recipeItem == null) {
+                    Log.i(TAG, "The selected recipe item is null! Investigate!");
+                    return;
+                }
+
+                ActionStateSingleton.getInstance().setViewId(recipeItem.getId());
 
                 TextView recipeViewTitleText = (TextView) findViewById(R.id.recipeViewTitle);
                 recipeViewTitleText.setText(recipeItem.getTitle());
@@ -192,50 +205,18 @@ public class MainActivity extends Activity {
                                 + " " + recipeItem.getIngredients());
 
                 ImageView recipeViewPicture = (ImageView) findViewById(R.id.recipeViewPicture);
-                byte[] blob = recipeItem.getPictureBlob();
-                if (blob != null) {
-                    recipeViewPicture.setImageBitmap(BitmapFactory.decodeByteArray(blob, 0, blob.length));
+                String blobData = recipeItem.getImageData();
+                if (blobData != null) {
+                    recipeViewPicture.setImageBitmap(BitmapFactory
+                            .decodeByteArray(blobData.getBytes(), 0, blobData.getBytes().length));
                 } else {
                     // If no picture was set yet, set the placeholder image
                     recipeViewPicture.setImageDrawable(
                             ContextCompat.getDrawable(getApplicationContext(), R.drawable.taco128));
                 }
 
-                // retrieve step data
-                SQLiteDatabase db = mDbHelper.getReadableDatabase();
-                String[] projection = {
-                        RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID,
-                        RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM,
-                        RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION,
-                };
-
-                // Sort by step numbers
-                String sortOrder = RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + " ASC";
-
-                Cursor c = null;
-                try {
-                    c = db.query(
-                            RecipeContract.StepEntry.TABLE_NAME,
-                            projection,
-                            RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = "
-                                    + String.valueOf(recipeItem.getId()),
-                            null,
-                            null,
-                            null,
-                            sortOrder
-                    );
-
-                    mViewStepAdapter.clear();
-                    for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                        mViewStepAdapter.add(new StepItem(c.getString(c.getColumnIndexOrThrow(
-                                RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION))
-                        ));
-                    }
-                } finally {
-                    if (c != null) {
-                        c.close();
-                    }
-                }
+                mViewStepAdapter.clear();
+                new StepLoadAsyncTask().execute(recipeItem.getId());
 
                 drawerLayout.openDrawer(viewRecipeRightRL);
             }
@@ -264,6 +245,23 @@ public class MainActivity extends Activity {
                 }
             }
         });
+
+        mLoader = getSupportLoaderManager().initLoader(1, null, this);
+        mLoader.startLoading();
+    }
+
+    @Override
+    public Loader<List<Recipe>> onCreateLoader(int id, Bundle args) {
+        return new RecipeLoader(MainActivity.this);
+    }
+    @Override
+    public void onLoadFinished(Loader<List<Recipe>> loader, List<Recipe> data) {
+        mAdapter.setRecipes(data);
+        mAdapter.notifyDataSetChanged();
+    }
+    @Override
+    public void onLoaderReset(Loader<List<Recipe>> loader) {
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -388,72 +386,44 @@ public class MainActivity extends Activity {
             compressedPicture = outputStream.toByteArray();
         }
 
-        long recipeId;
+        Long recipeId;
         if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Create) {
-            recipeId = mAdapter.getCount();
+            recipeId = null; // let SQLite generate its id
         } else if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit) {
             recipeId = ActionStateSingleton.getInstance().getViewId();
         } else {
             // better to crash than corrupting db..
             throw new RuntimeException("Trying to save data when action is not specified.");
         }
-        RecipeItem recipeItem = new RecipeItem(
-                recipeId,
-                mRecipeAddTitleText.getText().toString(),
-                mRecipeAddDescription.getText().toString(),
-                mRecipeAddIngredients.getText().toString(),
-                compressedPicture,
-                new Date());
 
-        List<String> steps = new ArrayList<>();
-        try {
-            // Remove all empty steps before inserting to db
-            for (int stepIndex=0; stepIndex<mAddStepAdapter.getCount(); stepIndex++) {
-                if (mAddStepAdapter.getItem(stepIndex).getIsSubmitted()) {
-                    recipeItem.addStep(mAddStepAdapter.getItem(stepIndex));
-                    steps.add(mAddStepAdapter.getItem(stepIndex).getStep());
-                } else {
-                    mAddStepAdapter.remove(stepIndex);
-                    stepIndex--;
-                }
-            }
-            mDbHelper.insertRecipeDataToDb(recipeItem);
-
-            Toast.makeText(getApplicationContext(),
-                    "Successfully saved the recipe for \"" + mRecipeAddTitleText.getText().toString() + "\"",
-                    Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-            Toast.makeText(getApplicationContext(),
-                    "Recipe save failed. Please try again.",
-                    Toast.LENGTH_LONG).show();
-            return; // don't clear the contents if unsuccessful
-        }
-
-        Log.i(TAG, "creating recipe");
         Recipe recipe = new Recipe();
-        recipe.setTitle(recipeItem.getTitle());
-        recipe.setDescription(recipeItem.getDescription());
-        recipe.setIngredients(recipeItem.getIngredients());
+        recipe.setId(recipeId);
+        recipe.setTitle(mRecipeAddTitleText.getText().toString());
+        recipe.setDescription(mRecipeAddDescription.getText().toString());
+        recipe.setIngredients(mRecipeAddIngredients.getText().toString());
+        recipe.setDate(new DateTime(new Date()));
         if (compressedPicture != null) {
             recipe.setImageData(Base64.encodeToString(compressedPicture, Base64.DEFAULT));
+        }
+
+        List<String> steps = new ArrayList<>();
+        // Remove all empty steps before inserting to db
+        for (int stepIndex=0; stepIndex<mAddStepAdapter.getCount(); stepIndex++) {
+            if (mAddStepAdapter.getItem(stepIndex).getIsSubmitted()) {
+                steps.add(mAddStepAdapter.getItem(stepIndex).getStep());
+            } else {
+                mAddStepAdapter.remove(stepIndex);
+                stepIndex--;
+            }
         }
         recipe.setSteps(steps);
 
         CheckBox cloudUploadCheckbox = (CheckBox)findViewById(R.id.recipeAddUploadToCloudCheckbox);
-        if (cloudUploadCheckbox.isChecked()) {
-            Log.i(TAG, "starting task");
-            RecipeSaveAsyncTask task = new RecipeSaveAsyncTask();
-            task.execute(recipe);
-        }
+        // Start saving task
+        RecipeSaveAsyncTask task = new RecipeSaveAsyncTask(cloudUploadCheckbox.isChecked());
+        task.execute(recipe);
 
-        clearContents();
-        mAddStepAdapter.clear();
-        drawerLayout.closeDrawer(addRecipeRightRL);
-
-        // reload items
-        mAdapter.clear();
-        loadItems();
+        mLoader.reset();
     }
 
     public void onRecipeViewCloseButtonClicked(View view) {
@@ -468,22 +438,8 @@ public class MainActivity extends Activity {
                 .setCancelable(true)
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
-                        // delete from db
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-                        db.delete(RecipeContract.StepEntry.TABLE_NAME,
-                                RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " +
-                                        ActionStateSingleton.getInstance().getViewId(),
-                                null);
-                        db.delete(RecipeContract.RecipeEntry.TABLE_NAME,
-                                RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " +
-                                        ActionStateSingleton.getInstance().getViewId(),
-                                null);
-
-                        // reload UIs
-                        mAdapter.clear();
-                        loadItems();
-
-                        drawerLayout.closeDrawer(viewRecipeRightRL);
+                        new RecipeDeleteAsyncTask().execute(
+                                ActionStateSingleton.getInstance().getViewId());
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -530,72 +486,7 @@ public class MainActivity extends Activity {
         return formatted.substring(
                 getResources().getString(R.string.ingredients_prefix_string).length());
     }
-/*
-    public void insertRecipeDataToDb(RecipeItem recipeItem) {
-        // insert recipe data
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-        ContentValues values = new ContentValues();
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID, recipeItem.getId());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE, recipeItem.getTitle());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION, recipeItem.getDescription());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS, recipeItem.getIngredients());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE, recipeItem.getPictureBlob());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipeItem.getDate().getTime());
-
-        if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Create) {
-            db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
-        } else if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit) {
-            db.update(RecipeContract.RecipeEntry.TABLE_NAME,
-                    values,
-                    RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " + recipeItem.getId(),
-                    null);
-
-            // delete the existing steps for this recipe
-            db.delete(RecipeContract.StepEntry.TABLE_NAME,
-                    RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " + recipeItem.getId(),
-                    null);
-        }
-
-        // SQL statement for inserting ingredients data
-        String[] ingredients = recipeItem.getIngredients().split("[ ]*,[ ]*");
-        String ingredientInsertSqlQuery =
-                "INSERT OR IGNORE INTO " + RecipeContract.IngredientsEntry.TABLE_NAME + " (" +
-                        RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT +
-                        ") VALUES (?);";
-        SQLiteStatement ingredientInsertStatement = db.compileStatement(ingredientInsertSqlQuery);
-
-        // SQL statement for inserting steps data
-        List<StepItem> steps = recipeItem.getSteps();
-        String stepInsertSqlQuery = "INSERT INTO " + RecipeContract.StepEntry.TABLE_NAME + " (" +
-                RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + ", " +
-                RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + ", " +
-                RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION +
-                ") VALUES (?,?,?);";
-        SQLiteStatement stepInsertStatement = db.compileStatement(stepInsertSqlQuery);
-
-        // start db transaction for both ingredients and steps
-        try {
-            db.beginTransaction();
-            int index;
-            for (index = 0; index<ingredients.length; index++) {
-                ingredientInsertStatement.clearBindings();
-                ingredientInsertStatement.bindString(1, ingredients[index]);
-                ingredientInsertStatement.execute();
-            }
-            for (index = 0; index < steps.size(); index++) {
-                stepInsertStatement.clearBindings();
-                stepInsertStatement.bindLong(1, recipeItem.getId()); // recipe id
-                stepInsertStatement.bindLong(2, index);
-                stepInsertStatement.bindString(3, steps.get(index).getStep());
-                stepInsertStatement.execute();
-            }
-            db.setTransactionSuccessful();
-        } finally {
-            db.endTransaction();
-        }
-    }
-*/
     private void clearContents() {
         ActionStateSingleton.getInstance().setEditorAction(ActionStateSingleton.EditorAction.None);
         mRecipeAddTitleText.setText("");
@@ -628,62 +519,9 @@ public class MainActivity extends Activity {
 
     // Load stored RecipeItems
     private void loadItems() {
-        // HACK! Uncomment the below lines when schema is changed (only once)
-        // TODO: To be removed when the schema is finalized
-        //getApplicationContext().deleteDatabase(RecipeDbHelper.DATABASE_NAME);
-
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-        // Specifies which columns to use from the database
-        String[] projection = {
-                RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID,
-                RecipeContract.RecipeEntry.COLUMN_NAME_TITLE,
-                RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION,
-                RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS,
-                RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE,
-                RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME,
-        };
-        String[] ingrProjection = { RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT };
         mIngredientsAdapter.clear();
 
-        // Sort recipes by decreasing order of date
-        String sortOrder = RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME + " DESC";
-
-        Cursor c = null;
-        try {
-            c = db.query(
-                    RecipeContract.RecipeEntry.TABLE_NAME,
-                    projection,
-                    null,
-                    null,
-                    null,
-                    null,
-                    sortOrder
-            );
-
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                RecipeItem recipeItem = new RecipeItem(
-                        c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID)),
-                        c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE)),
-                        c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION)),
-                        c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS)),
-                        c.getBlob(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE)),
-                        new Date(c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME)))
-                );
-                mAdapter.add(recipeItem);
-            }
-
-            c = db.query(RecipeContract.IngredientsEntry.TABLE_NAME, ingrProjection,
-                    null, null, null, null, null);
-            for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
-                mIngredientsAdapter.add(c.getString(c.getColumnIndexOrThrow((
-                        RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT))));
-            }
-        } finally {
-            if (c != null) {
-                c.close();
-            }
-        }
+        mLoader.startLoading();
     }
 
     @Override
@@ -712,39 +550,183 @@ public class MainActivity extends Activity {
     }
     /***/
 
-    private class RecipeSaveAsyncTask extends AsyncTask<Recipe, Void, Recipe> {
+    private class RecipeSaveAsyncTask extends AsyncTask<Recipe, Integer, Recipe> {
         private final String TAG = RecipeSaveAsyncTask.class.getSimpleName();
+
+        Boolean saveToServer;
+        String message;
+        ProgressDialog progressDialog;
+
+        public RecipeSaveAsyncTask(Boolean saveToServer) {
+            this.saveToServer = saveToServer;
+            this.progressDialog = new ProgressDialog(MainActivity.this);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog.show();
+        }
 
         @Override
         protected Recipe doInBackground(Recipe... param) {
-            Log.i(TAG, "doInBackground entered");
-            if (param[0] == null) {
-                Log.w(TAG, "Recipe for RecipeSaveAsyncTask is null!");
-                return null;
-            }
             Recipe recipe = param[0];
 
-            RecipeApi recipeApi = CloudEndpointBuilderHelper.getRecipeEndpoints();
+            if (saveToServer) {
+                progressDialog.setMessage("Saving recipe to the server...");
+
+                // Request backend service
+                RecipeApi recipeApi = CloudEndpointBuilderHelper.getRecipeEndpoints();
+                try {
+                    Log.i(TAG, "going into api");
+                    recipe = recipeApi.insert(recipe).execute();    // obtain id generated by server
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    message = "There was an error uploading to Recipe World. Please try again.";
+                }
+            }
+
+            publishProgress();  // update progress dialog
 
             try {
-                Log.i(TAG, "going into api");
-                return recipeApi.insert(recipe).execute();
-            } catch (IOException e) {
+                // Insert to local db
+                mDbHelper.insertRecipeDataToDb(recipe);
+            } catch (Exception e) {
                 e.printStackTrace();
+                message = "Could not save to Recipe Book. Please try again.";
                 return null;
             }
+
+            if (message == null) {  // means nothing bad occurred
+                message = "Successfully saved the recipe for \"" + recipe.getTitle() + "\"";
+            }
+
+            return recipe;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate();
+            progressDialog.setMessage("Saving recipe to the local database...");
         }
 
         @Override
         protected void onPostExecute(Recipe result) {
-            String msg;
-            if (result != null) {
-                msg = "Successfully submitted the recipe to Recipe World.";
-                Log.i(TAG, "user nickname = "+result.getAuthorName());
-            } else {
-                msg = "Could not upload to the server. Please try again.";
+            progressDialog.dismiss();
+
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+
+            if (result != null) {   // save to local db successful, reset contents
+                clearContents();
+                mAddStepAdapter.clear();
+                drawerLayout.closeDrawer(addRecipeRightRL);
+
+                // reload items
+                mAdapter.clear();
+                loadItems();
             }
-            Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public class RecipeDeleteAsyncTask extends AsyncTask<Long, Integer, Void> {
+        private final String TAG = RecipeDeleteAsyncTask.class.getSimpleName();
+
+        String message;
+        ProgressDialog progressDialog;
+
+        public RecipeDeleteAsyncTask() {
+            this.progressDialog = new ProgressDialog(MainActivity.this);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Long... recipeId) {
+            try {
+                SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                db.delete(RecipeContract.StepEntry.TABLE_NAME,
+                        RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = "
+                                + Long.toString(recipeId[0]),
+                        null);
+                db.delete(RecipeContract.RecipeEntry.TABLE_NAME,
+                        RecipeContract.RecipeEntry._ID + " = " + Long.toString(recipeId[0]),
+                        null);
+                return null;
+            } catch (Exception e) {
+                e.printStackTrace();
+                message = "Could not delete the recipe. Please try again.";
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void param) {
+            progressDialog.dismiss();
+
+            if (message == null) {
+                message = "The recipe got deleted succesfully.";
+
+                // reload UIs
+                mAdapter.clear();
+                loadItems();
+
+                drawerLayout.closeDrawer(viewRecipeRightRL);
+            }
+
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public class StepLoadAsyncTask extends AsyncTask<Long, Integer, Void> {
+        private final String TAG = StepLoadAsyncTask.class.getSimpleName();
+
+        List<StepItem> steps = new ArrayList<>();
+
+        @Override
+        protected Void doInBackground(Long... recipeId) {
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+            Cursor c = null;
+            try {
+                // retrieve step data
+                String[] projection = {
+                        RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID,
+                        RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM,
+                        RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION,
+                };
+
+                // Sort by step numbers
+                String sortOrder = RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + " ASC";
+                c = db.query(
+                        RecipeContract.StepEntry.TABLE_NAME,
+                        projection,
+                        RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = "
+                                + Long.toString(recipeId[0]),
+                        null,
+                        null,
+                        null,
+                        sortOrder
+                );
+
+                for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                    steps.add(new StepItem(c.getString(c.getColumnIndexOrThrow(
+                            RecipeContract.StepEntry.COLUMN_NAME_STEP_DESCRIPTION))));
+                }
+            } finally {
+                if (c != null) {
+                    c.close();
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void param) {
+            mViewStepAdapter.setItems(steps);
         }
     }
 

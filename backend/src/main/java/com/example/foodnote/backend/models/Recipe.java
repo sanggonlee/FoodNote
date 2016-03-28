@@ -1,6 +1,7 @@
 package com.example.foodnote.backend.models;
 
 import com.google.appengine.api.datastore.Blob;
+import com.google.appengine.repackaged.com.google.api.client.util.DateTime;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 
@@ -11,6 +12,7 @@ import java.util.List;
 public class Recipe {
     @Id
     private Long id;
+    private Long idLocal;
     private String authorId;
     private String authorName;
     private String title;
@@ -140,9 +142,5 @@ public class Recipe {
 
     public void setDate(Date date) {
         this.date = date;
-    }
-
-    public void something() {
-        return;
     }
 }

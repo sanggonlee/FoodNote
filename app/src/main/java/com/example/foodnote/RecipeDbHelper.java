@@ -8,10 +8,13 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 import com.example.foodnote.RecipeContract.RecipeEntry;
+import com.example.foodnote.backend.apis.recipeApi.model.Recipe;
 
 import java.util.List;
 
 public class RecipeDbHelper extends SQLiteOpenHelper{
+    private static final String TAG = "RecipeDbHelper";
+
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "Recipe.db";
     
@@ -71,34 +74,37 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
         onCreate(db);
     }
 
-    public void insertRecipeDataToDb(RecipeItem recipeItem) {
+    public void insertRecipeDataToDb(Recipe recipe) {
         // insert recipe data
         SQLiteDatabase db = getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID, recipeItem.getId());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE, recipeItem.getTitle());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION, recipeItem.getDescription());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS, recipeItem.getIngredients());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE, recipeItem.getPictureBlob());
-        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipeItem.getDate().getTime());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE, recipe.getTitle());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION, recipe.getDescription());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS, recipe.getIngredients());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE, recipe.getImageData());
+        values.put(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME, recipe.getDate().getValue());
 
+        Long recipeId = recipe.getId();
         if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Create) {
-            db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
+            recipeId = db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
+            Log.i(TAG, "inserted recipe into db: " + recipeId);
         } else if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit) {
             db.update(RecipeContract.RecipeEntry.TABLE_NAME,
                     values,
-                    RecipeContract.RecipeEntry.COLUMN_NAME_ENTRY_ID + " = " + recipeItem.getId(),
+                    RecipeContract.RecipeEntry._ID + " = " + recipeId,
                     null);
 
             // delete the existing steps for this recipe
             db.delete(RecipeContract.StepEntry.TABLE_NAME,
-                    RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + " = " + recipeItem.getId(),
+                    RecipeContract.StepEntry._ID + " = " + recipeId,
                     null);
+        } else {
+
         }
 
         // SQL statement for inserting ingredients data
-        String[] ingredients = recipeItem.getIngredients().split("[ ]*,[ ]*");
+        String[] ingredients = recipe.getIngredients().split("[ ]*,[ ]*");
         String ingredientInsertSqlQuery =
                 "INSERT OR IGNORE INTO " + RecipeContract.IngredientsEntry.TABLE_NAME + " (" +
                         RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT +
@@ -106,7 +112,7 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
         SQLiteStatement ingredientInsertStatement = db.compileStatement(ingredientInsertSqlQuery);
 
         // SQL statement for inserting steps data
-        List<StepItem> steps = recipeItem.getSteps();
+        List<String> steps = recipe.getSteps();
         String stepInsertSqlQuery = "INSERT INTO " + RecipeContract.StepEntry.TABLE_NAME + " (" +
                 RecipeContract.StepEntry.COLUMN_NAME_RECIPE_ID + ", " +
                 RecipeContract.StepEntry.COLUMN_NAME_STEP_NUM + ", " +
@@ -123,11 +129,12 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
                 ingredientInsertStatement.bindString(1, ingredients[index]);
                 ingredientInsertStatement.execute();
             }
+
             for (index = 0; index < steps.size(); index++) {
                 stepInsertStatement.clearBindings();
-                stepInsertStatement.bindLong(1, recipeItem.getId()); // recipe id
+                stepInsertStatement.bindLong(1, recipeId);
                 stepInsertStatement.bindLong(2, index);
-                stepInsertStatement.bindString(3, steps.get(index).getStep());
+                stepInsertStatement.bindString(3, steps.get(index));
                 stepInsertStatement.execute();
             }
             db.setTransactionSuccessful();

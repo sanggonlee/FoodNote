@@ -1,7 +1,10 @@
 package com.example.foodnote;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
@@ -19,8 +22,10 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.example.foodnote.backend.apis.recipeApi.model.Recipe;
+
 public class RecipeListAdapter extends BaseAdapter {
-	private final List<RecipeItem> mItems = new ArrayList<RecipeItem>();
+	private List<Recipe> mItems = new ArrayList<Recipe>();
 	private final Context mContext;
 
 	private static final String TAG = "RecipeListAdapter";
@@ -31,8 +36,13 @@ public class RecipeListAdapter extends BaseAdapter {
 
 	// Add a RecipeItem to the adapter
 	// Notify observers that the data set has changed
-	public void add(RecipeItem item) {
+	public void add(Recipe item) {
 		mItems.add(item);
+		notifyDataSetChanged();
+	}
+
+	public void setRecipes(List<Recipe> recipes) {
+		mItems = recipes;
 		notifyDataSetChanged();
 	}
 
@@ -68,7 +78,7 @@ public class RecipeListAdapter extends BaseAdapter {
 	// See: http://developer.android.com/training/improving-layouts/smooth-scrolling.html
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		final RecipeItem recipeItem = mItems.get(position);
+		final Recipe recipeItem = mItems.get(position);
 
 		// Inflate the View for this RecipeItem from recipe_item.xml
 		RelativeLayout itemLayout = convertView != null ? (RelativeLayout) convertView :
@@ -76,9 +86,9 @@ public class RecipeListAdapter extends BaseAdapter {
 				.inflate(R.layout.recipe_item, parent, false);
 
 		final ImageView imageView = (ImageView)itemLayout.getChildAt(0);
-		if (recipeItem.getPictureBlob() != null) {
+		if (recipeItem.getImageData() != null) {
 			imageView.setImageBitmap(BitmapFactory.decodeByteArray(
-					recipeItem.getPictureBlob(), 0, recipeItem.getPictureBlob().length));
+					recipeItem.getImageData().getBytes(), 0, recipeItem.getImageData().getBytes().length));
 		} else {
 			// If there's no image set, set as the placeholder image
 			imageView.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.taco128));
@@ -91,7 +101,8 @@ public class RecipeListAdapter extends BaseAdapter {
 		descriptionView.setText(recipeItem.getDescription());
 
 		final TextView dateView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(2);
-		dateView.setText(RecipeItem.FORMAT.format(recipeItem.getDate()));
+		dateView.setText(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(
+				new Date(recipeItem.getDate().getValue())));
 
 		// Return the View you just created
 		return itemLayout;

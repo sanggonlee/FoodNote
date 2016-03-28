@@ -9,10 +9,17 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.List;
+
 public class ViewStepListAdapter extends BaseStepListAdapter {
 
     public ViewStepListAdapter(Context context, ListView listView) {
         super(context, listView);
+    }
+
+    public void setItems(List<StepItem> steps) {
+        mItems = steps;
+        notifyDataSetChanged();
     }
 
     @Override
