@@ -205,10 +205,9 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
                                 + " " + recipeItem.getIngredients());
 
                 ImageView recipeViewPicture = (ImageView) findViewById(R.id.recipeViewPicture);
-                String blobData = recipeItem.getImageData();
-                if (blobData != null) {
-                    recipeViewPicture.setImageBitmap(BitmapFactory
-                            .decodeByteArray(blobData.getBytes(), 0, blobData.getBytes().length));
+                if (recipeItem.getImageData() != null) {
+                    byte[] byteArray = Base64.decode(recipeItem.getImageData(), Base64.DEFAULT);
+                    recipeViewPicture.setImageBitmap(BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length));
                 } else {
                     // If no picture was set yet, set the placeholder image
                     recipeViewPicture.setImageDrawable(
@@ -254,11 +253,12 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
     public Loader<List<Recipe>> onCreateLoader(int id, Bundle args) {
         return new RecipeLoader(MainActivity.this);
     }
+
     @Override
     public void onLoadFinished(Loader<List<Recipe>> loader, List<Recipe> data) {
         mAdapter.setRecipes(data);
-        mAdapter.notifyDataSetChanged();
     }
+
     @Override
     public void onLoaderReset(Loader<List<Recipe>> loader) {
         mAdapter.notifyDataSetChanged();

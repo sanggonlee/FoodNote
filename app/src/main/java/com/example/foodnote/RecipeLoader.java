@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.AsyncTaskLoader;
-import android.util.Base64;
 import android.util.Log;
 
 import com.example.foodnote.backend.apis.recipeApi.model.Recipe;
@@ -64,10 +63,7 @@ public class RecipeLoader extends AsyncTaskLoader<List<Recipe>> {
                 recipe.setTitle(c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_TITLE)));
                 recipe.setDescription(c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_DESCRIPTION)));
                 recipe.setIngredients(c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_INGREDIENTS)));
-                byte[] imageBlob = c.getBlob(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE));
-                if (imageBlob != null) {
-                    recipe.setImageData(Base64.encodeToString(imageBlob, Base64.DEFAULT));
-                }
+                recipe.setImageData(c.getString(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_IMAGE)));
                 recipe.setDate(new DateTime(c.getLong(c.getColumnIndexOrThrow(RecipeContract.RecipeEntry.COLUMN_NAME_UPDATE_TIME))));
 
                 recipes.add(recipe);
@@ -88,6 +84,7 @@ public class RecipeLoader extends AsyncTaskLoader<List<Recipe>> {
                 c.close();
             }
         }
+
         return recipes;
     }
 }

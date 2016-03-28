@@ -9,17 +9,14 @@ import java.util.Locale;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.support.v4.content.ContextCompat;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.example.foodnote.backend.apis.recipeApi.model.Recipe;
@@ -87,8 +84,8 @@ public class RecipeListAdapter extends BaseAdapter {
 
 		final ImageView imageView = (ImageView)itemLayout.getChildAt(0);
 		if (recipeItem.getImageData() != null) {
-			imageView.setImageBitmap(BitmapFactory.decodeByteArray(
-					recipeItem.getImageData().getBytes(), 0, recipeItem.getImageData().getBytes().length));
+			byte[] byteArray = Base64.decode(recipeItem.getImageData(), Base64.DEFAULT);
+			imageView.setImageBitmap(BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length));
 		} else {
 			// If there's no image set, set as the placeholder image
 			imageView.setImageDrawable(ContextCompat.getDrawable(mContext, R.drawable.taco128));
