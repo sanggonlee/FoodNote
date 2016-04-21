@@ -11,6 +11,9 @@ public class ActionStateSingleton {
     }
     private EditorAction editorAction;
     private long viewId;
+    private String appEngineUserId;
+    private String viewAuthorId;
+    private int browser;
 
     private ActionStateSingleton() {
         this.editorAction = EditorAction.None;
@@ -37,5 +40,29 @@ public class ActionStateSingleton {
 
     public long getViewId() {
         return viewId;
+    }
+
+    public void setAppEngineUserId(String id) {
+        this.appEngineUserId = id;
+    }
+
+    public String getAppEngineUserId() {
+        return appEngineUserId;
+    }
+
+    public void setViewAuthorId(String id) {
+        this.viewAuthorId = id;
+    }
+
+    public String getViewAuthorId() {
+        return viewAuthorId;
+    }
+
+    public void setBrowser(int browser) {
+        this.browser = browser;
+    }
+
+    public int getBrowser() {
+        return browser;
     }
 }

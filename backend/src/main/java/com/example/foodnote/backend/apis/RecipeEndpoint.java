@@ -2,6 +2,7 @@ package com.example.foodnote.backend.apis;
 
 import com.example.foodnote.backend.Constants;
 import com.example.foodnote.backend.OfyService;
+import com.example.foodnote.backend.models.AppEngineUser;
 import com.example.foodnote.backend.models.Recipe;
 import com.example.foodnote.backend.utils.Utils;
 import com.google.api.server.spi.config.Api;
@@ -106,7 +107,6 @@ public class RecipeEndpoint {
             path = "recipe/{id}",
             httpMethod = ApiMethod.HttpMethod.PUT)
     public Recipe update(@Named("id") Long id, Recipe recipe) throws NotFoundException {
-        // TODO: You should validate your ID parameter against your resource's ID here.
         checkExists(id);
         ofy().save().entity(recipe).now();
         logger.info("Updated Recipe: " + recipe);

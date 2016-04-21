@@ -3,7 +3,7 @@ package com.example.foodnote;
 import android.util.Log;
 
 import com.example.foodnote.backend.apis.recipeApi.RecipeApi;
-import com.example.foodnote.backend.apis.stepApi.StepApi;
+import com.example.foodnote.backend.models.appEngineUserApi.AppEngineUserApi;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
@@ -42,10 +42,10 @@ public class CloudEndpointBuilderHelper {
     }
 
     /*
-     *  @return StepEndpoint to the Google App Engine backend
+     *  @return AppEngineUserEndpoint to the Google App Engine backend
      */
-    static StepApi getStepEndpoints() {
-        StepApi.Builder builder = new StepApi.Builder(
+    static AppEngineUserApi getAppEngineUserEndpoints() {
+        AppEngineUserApi.Builder builder = new AppEngineUserApi.Builder(
                 AndroidHttp.newCompatibleTransport(),
                 new AndroidJsonFactory(),
                 SignInActivity.getCredential())

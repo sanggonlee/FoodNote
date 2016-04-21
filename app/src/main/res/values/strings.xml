@@ -2,7 +2,7 @@
 <resources>
     <string name="google_app_id">233735259795</string>
 
-    <string name="app_name">My Cooking Secret</string>
+    <string name="app_name">FoodNote</string>
     <string name="done_string">Done:</string>
     <string name="date_string">Date:</string>
     <string name="add_new_recipe_string">Add New Recipe</string>
@@ -31,6 +31,8 @@
     <string name="enter_title_string">Enter Title</string>
     <string name="picture_string">Picture</string>
     <string name="delete_string">Delete</string>
+    <string name="recipe_book">Recipe Book</string>
+    <string name="recipe_world">Recipe World</string>
     <string name="browse_recipe_book">Browse Recipe Book</string>
     <string name="browse_recipe_world">Browse Recipe World</string>
     <string name="upload_to_recipe_world_option">Also upload to Recipe World</string>

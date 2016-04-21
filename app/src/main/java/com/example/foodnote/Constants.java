@@ -14,4 +14,9 @@ public class Constants {
      *  Key for the currently signed in account for the shared preferences
      */
     static final String ACCOUNT_NAME_SETTINGS_NAME = "accountName";
+
+    /*
+     *  Key for the currently signed in user's App Engine User Id for the shared preferences
+     */
+    static final String APP_ENGINE_USER_ID = "appEngineUserId";
 }

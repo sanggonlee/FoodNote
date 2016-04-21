@@ -88,7 +88,6 @@ public class RecipeDbHelper extends SQLiteOpenHelper{
         Long recipeId = recipe.getId();
         if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Create) {
             recipeId = db.insert(RecipeContract.RecipeEntry.TABLE_NAME, null, values);
-            Log.i(TAG, "inserted recipe into db: " + recipeId);
         } else if (ActionStateSingleton.getInstance().getEditorAction() == ActionStateSingleton.EditorAction.Edit) {
             db.update(RecipeContract.RecipeEntry.TABLE_NAME,
                     values,

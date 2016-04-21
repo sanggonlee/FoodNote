@@ -14,7 +14,7 @@
         <init-param>
             <param-name>services</param-name>
             <param-value>com.example.foodnote.backend.apis.RecipeEndpoint,
-                com.example.foodnote.backend.apis.StepEndpoint</param-value>
+                com.example.foodnote.backend.apis.AppEngineUserEndpoint</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>

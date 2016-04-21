@@ -343,7 +343,7 @@
                     android:descendantFocusability="beforeDescendants" />
 
                 <Button
-                    android:id="@+id/recipeViewCloseButton"
+                    android:id="@+id/recipeViewDeleteButton"
                     android:textColor="#FFFFFF"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -354,11 +354,11 @@
                     android:layout_below="@id/recipeViewStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
-                    android:text="@string/close_string"
-                    android:onClick="onRecipeViewCloseButtonClicked"/>
+                    android:text="@string/delete_string"
+                    android:onClick="onRecipeViewDeleteButtonClicked"/>
 
                 <Button
-                    android:id="@+id/recipeViewDeleteButton"
+                    android:id="@+id/recipeViewCloseButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerHorizontal="true"
@@ -368,8 +368,8 @@
                     android:layout_below="@id/recipeViewStepsList"
                     android:layout_marginTop="14dp"
                     android:background="@drawable/button_shape"
-                    android:text="@string/delete_string"
-                    android:onClick="onRecipeViewDeleteButtonClicked" />
+                    android:text="@string/close_string"
+                    android:onClick="onRecipeViewCloseButtonClicked" />
 
                 <Button
                     android:id="@+id/recipeViewEditButton"

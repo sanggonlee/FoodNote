@@ -2,6 +2,7 @@ package com.example.foodnote;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -25,6 +26,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -35,11 +37,13 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.RelativeLayout;
@@ -65,6 +69,8 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
     private static final int SIGN_IN_REQ_CODE = 1;
 
     SharedPreferences sharedPreferences;
+
+    ProgressDialog mProgressDialog;
 
     Loader<List<Recipe>> mLoader;
 
@@ -96,10 +102,13 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
 
         sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
 
+        mProgressDialog = new ProgressDialog(MainActivity.this);
+
         // transparent action bar
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
         if (getActionBar() != null) {
             getActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+            getActionBar().setTitle(R.string.recipe_book);
         }
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -192,6 +201,17 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
                 }
 
                 ActionStateSingleton.getInstance().setViewId(recipeItem.getId());
+                if (ActionStateSingleton.getInstance().getBrowser() == R.id.recipe_world) {
+                    ActionStateSingleton.getInstance().setViewAuthorId(recipeItem.getAuthorId());
+
+                    // Hide delete and edit buttons if not author
+                    Boolean isAuthorMe = ActionStateSingleton.getInstance().getAppEngineUserId().equals(
+                            ActionStateSingleton.getInstance().getViewAuthorId());
+                    (findViewById(R.id.recipeViewEditButton))
+                            .setVisibility(isAuthorMe ? View.VISIBLE : View.GONE);
+                    (findViewById(R.id.recipeViewDeleteButton))
+                            .setVisibility(isAuthorMe ? View.VISIBLE : View.GONE);
+                }
 
                 TextView recipeViewTitleText = (TextView) findViewById(R.id.recipeViewTitle);
                 recipeViewTitleText.setText(recipeItem.getTitle());
@@ -215,7 +235,23 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
                 }
 
                 mViewStepAdapter.clear();
-                new StepLoadAsyncTask().execute(recipeItem.getId());
+                if (ActionStateSingleton.getInstance().getBrowser() == R.id.recipe_book) {
+                    new StepLoadAsyncTask().execute(recipeItem.getId());
+                } else if (ActionStateSingleton.getInstance().getBrowser() == R.id.recipe_world) {
+                    List<StepItem> steps = new ArrayList<>();
+                    for(String step : recipeItem.getSteps()) {
+                        steps.add(new StepItem(step));
+                    }
+                    mViewStepAdapter.setItems(steps);
+                }
+
+                if (ActionStateSingleton.getInstance().getBrowser() == R.id.recipe_world) {
+                    findViewById(R.id.recipeViewDeleteButton).setVisibility(View.GONE);
+                    findViewById(R.id.recipeViewEditButton).setVisibility(View.GONE);
+                } else if (ActionStateSingleton.getInstance().getBrowser() == R.id.recipe_book) {
+                    findViewById(R.id.recipeViewDeleteButton).setVisibility(View.VISIBLE);
+                    findViewById(R.id.recipeViewEditButton).setVisibility(View.VISIBLE);
+                }
 
                 drawerLayout.openDrawer(viewRecipeRightRL);
             }
@@ -233,30 +269,34 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     // Show dialog just in case starting activity takes longer than usual
-                    ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
-                    progressDialog.setMessage("Checking user information..");
-                    progressDialog.show();
+                    mProgressDialog.setMessage("Checking user information..");
+                    mProgressDialog.show();
 
                     Intent signInIntent = new Intent(MainActivity.this, SignInActivity.class);
                     startActivityForResult(signInIntent, SIGN_IN_REQ_CODE);
 
-                    progressDialog.dismiss();
+                    mProgressDialog.dismiss();
                 }
             }
         });
 
+        ActionStateSingleton.getInstance().setBrowser(R.id.recipe_book);
         mLoader = getSupportLoaderManager().initLoader(1, null, this);
         mLoader.startLoading();
+        new IngredientsLoadAsyncTask().execute();
     }
 
     @Override
     public Loader<List<Recipe>> onCreateLoader(int id, Bundle args) {
-        return new RecipeLoader(MainActivity.this);
+        return new RecipeLoader(MainActivity.this, mProgressDialog);
     }
 
     @Override
     public void onLoadFinished(Loader<List<Recipe>> loader, List<Recipe> data) {
         mAdapter.setRecipes(data);
+        Log.i(TAG, "load finished");
+        //Toast.makeText(getApplicationContext(), "Finished loading recipes.", Toast.LENGTH_SHORT).show();
+        mProgressDialog.dismiss();
     }
 
     @Override
@@ -288,16 +328,30 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
                 }
                 mRecipeAddTitleText.requestFocus();
                 drawerLayout.openDrawer(addRecipeRightRL);
-                return true;
+                break;
             case R.id.recipe_book:
-                return true;
+                ActionStateSingleton.getInstance().setBrowser(R.id.recipe_book);
+                mAdapter.clear();
+                mLoader.startLoading();
+                if (getActionBar() != null) {
+                    getActionBar().setTitle(R.string.recipe_book);
+                }
+                break;
             case R.id.recipe_world:
                 Intent signInIntent = new Intent(MainActivity.this, SignInActivity.class);
                 startActivityForResult(signInIntent, SIGN_IN_REQ_CODE);
-                return true;
+
+                ActionStateSingleton.getInstance().setBrowser(R.id.recipe_world);
+                mAdapter.clear();
+                mLoader.startLoading();
+                if (getActionBar() != null) {
+                    getActionBar().setTitle(R.string.recipe_world);
+                }
+                break;
             default:
                 return super.onOptionsItemSelected(item);
         }
+        return true;
     }
 
     public void onAddRecipeBackgroundClicked(View view) {
@@ -420,7 +474,8 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
 
         CheckBox cloudUploadCheckbox = (CheckBox)findViewById(R.id.recipeAddUploadToCloudCheckbox);
         // Start saving task
-        RecipeSaveAsyncTask task = new RecipeSaveAsyncTask(cloudUploadCheckbox.isChecked());
+        RecipeSaveAsyncTask task = new RecipeSaveAsyncTask(cloudUploadCheckbox.isChecked(),
+                ActionStateSingleton.getInstance().getEditorAction());
         task.execute(recipe);
 
         mLoader.reset();
@@ -528,6 +583,11 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
     public void onResume() {
         super.onResume();
 
+        if (ActionStateSingleton.getInstance().getAppEngineUserId() == null) {
+            ActionStateSingleton.getInstance().setAppEngineUserId(
+                    sharedPreferences.getString(Constants.APP_ENGINE_USER_ID, null));
+        }
+
         // Load saved RecipeItems, if necessary
         if (mAdapter.getCount() == 0) {
             loadItems();
@@ -554,17 +614,17 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
         private final String TAG = RecipeSaveAsyncTask.class.getSimpleName();
 
         Boolean saveToServer;
+        ActionStateSingleton.EditorAction action;
         String message;
-        ProgressDialog progressDialog;
 
-        public RecipeSaveAsyncTask(Boolean saveToServer) {
+        public RecipeSaveAsyncTask(Boolean saveToServer, ActionStateSingleton.EditorAction action) {
             this.saveToServer = saveToServer;
-            this.progressDialog = new ProgressDialog(MainActivity.this);
+            this.action = action;
         }
 
         @Override
         protected void onPreExecute() {
-            progressDialog.show();
+            mProgressDialog.show();
         }
 
         @Override
@@ -572,13 +632,18 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
             Recipe recipe = param[0];
 
             if (saveToServer) {
-                progressDialog.setMessage("Saving recipe to the server...");
+                mProgressDialog.setMessage("Saving recipe to the server...");
 
                 // Request backend service
                 RecipeApi recipeApi = CloudEndpointBuilderHelper.getRecipeEndpoints();
                 try {
                     Log.i(TAG, "going into api");
-                    recipe = recipeApi.insert(recipe).execute();    // obtain id generated by server
+                    if (action == ActionStateSingleton.EditorAction.Create) {
+                        recipe = recipeApi.insert(recipe).execute();    // obtain id generated by server
+                    } else if (action == ActionStateSingleton.EditorAction.Edit) {
+                        recipe = recipeApi.update(recipe.getId(), recipe).execute();
+                    }
+
                 } catch (IOException e) {
                     e.printStackTrace();
                     message = "There was an error uploading to Recipe World. Please try again.";
@@ -606,12 +671,12 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
         @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate();
-            progressDialog.setMessage("Saving recipe to the local database...");
+            mProgressDialog.setMessage("Saving recipe to the local database...");
         }
 
         @Override
         protected void onPostExecute(Recipe result) {
-            progressDialog.dismiss();
+            mProgressDialog.dismiss();
 
             Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
 
@@ -631,15 +696,13 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
         private final String TAG = RecipeDeleteAsyncTask.class.getSimpleName();
 
         String message;
-        ProgressDialog progressDialog;
 
         public RecipeDeleteAsyncTask() {
-            this.progressDialog = new ProgressDialog(MainActivity.this);
         }
 
         @Override
         protected void onPreExecute() {
-            progressDialog.show();
+            mProgressDialog.show();
         }
 
         @Override
@@ -664,7 +727,7 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
 
         @Override
         protected void onPostExecute(Void param) {
-            progressDialog.dismiss();
+            mProgressDialog.dismiss();
 
             if (message == null) {
                 message = "The recipe got deleted succesfully.";
@@ -727,6 +790,33 @@ public class MainActivity extends FragmentActivity implements LoaderManager.Load
         @Override
         protected void onPostExecute(Void param) {
             mViewStepAdapter.setItems(steps);
+        }
+    }
+
+    public class IngredientsLoadAsyncTask extends AsyncTask<Void, Void, Void> {
+        private final String TAG = IngredientsLoadAsyncTask.class.getSimpleName();
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+            Cursor c = null;
+            try {
+                String[] ingrProjection = { RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT };
+                c = db.query(RecipeContract.IngredientsEntry.TABLE_NAME, ingrProjection,
+                        null, null, null, null, null);
+
+                for (c.moveToFirst(); !c.isAfterLast(); c.moveToNext()) {
+                    mIngredientsAdapter.add(c.getString(c.getColumnIndexOrThrow((
+                            RecipeContract.IngredientsEntry.COLUMN_NAME_INGREDIENT))));
+                }
+            } finally {
+                if (c != null) {
+                    c.close();
+                }
+            }
+
+            return null;
         }
     }
 

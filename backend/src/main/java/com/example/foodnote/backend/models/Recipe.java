@@ -12,7 +12,6 @@ import java.util.List;
 public class Recipe {
     @Id
     private Long id;
-    private Long idLocal;
     private String authorId;
     private String authorName;
     private String title;

@@ -97,7 +97,12 @@ public class RecipeListAdapter extends BaseAdapter {
 		final TextView descriptionView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(1);
 		descriptionView.setText(recipeItem.getDescription());
 
-		final TextView dateView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(2);
+		if (ActionStateSingleton.getInstance().getBrowser() == R.id.recipe_world) {
+			final TextView authorView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(2);
+			authorView.setText("Written by " + recipeItem.getAuthorName());
+		}
+
+		final TextView dateView = (TextView)((RelativeLayout)itemLayout.getChildAt(1)).getChildAt(3);
 		dateView.setText(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(
 				new Date(recipeItem.getDate().getValue())));
 

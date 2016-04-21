@@ -12,7 +12,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.example.foodnote.backend.models.appEngineUserApi.AppEngineUserApi;
+import com.example.foodnote.backend.models.appEngineUserApi.model.AppEngineUser;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+
+import java.io.IOException;
 
 public class SignInActivity extends AppCompatActivity {
     private static final String TAG = SignInActivity.class.getSimpleName();
@@ -34,16 +38,22 @@ public class SignInActivity extends AppCompatActivity {
     SharedPreferences sharedPreferences;
 
     /*
+     *  Progress Dialog that indicates progress for this activity
+     */
+    ProgressDialog mProgressDialog;
+
+    /*
      *  If user already signed in, return to MainActivity
      *  Otherwise, show options for signing in
      */
     @Override
     protected final void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_sign_in);
 
         sharedPreferences = getSharedPreferences(Constants.PREFS_NAME, 0);
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setMessage("Please wait a moment..");
 
         if (isSignedIn()) {
             finish();
@@ -80,9 +90,7 @@ public class SignInActivity extends AppCompatActivity {
      *  Prompt for Gmail user authentication
      */
     public void onGmailSignInButtonClicked() {
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Please wait a moment..");
-        new GmailAccountPickerTask(progressDialog).execute();
+        new GmailAccountPickerTask().execute();
     }
 
     @Override
@@ -95,7 +103,8 @@ public class SignInActivity extends AppCompatActivity {
                         .putString(Constants.ACCOUNT_NAME_SETTINGS_NAME, accountName)
                         .apply();
                 credential.setSelectedAccountName(accountName);
-                finish();
+
+                new AppEngineUserTask().execute();
             }
         }
     }
@@ -106,14 +115,8 @@ public class SignInActivity extends AppCompatActivity {
      */
     private class GmailAccountPickerTask extends AsyncTask<Void, Void, Void> {
 
-        ProgressDialog progressDialog;
-
-        public GmailAccountPickerTask(ProgressDialog progressDialog) {
-            this.progressDialog = progressDialog;
-        }
-
         public void onPreExecute() {
-            progressDialog.show();
+            mProgressDialog.show();
         }
 
         public Void doInBackground(Void... param) {
@@ -129,7 +132,37 @@ public class SignInActivity extends AppCompatActivity {
         }
 
         public void onPostExecute(Void param) {
-            progressDialog.dismiss();
+            mProgressDialog.dismiss();
+        }
+    }
+
+    /*
+     *  A task used to set up user as App Engine User
+     */
+    private class AppEngineUserTask extends AsyncTask<Void, Void, Void>  {
+
+        public void onPreExecute() {
+            mProgressDialog.show();
+        }
+
+        public Void doInBackground(Void... param) {
+            AppEngineUserApi appEngineUserApi = CloudEndpointBuilderHelper.getAppEngineUserEndpoints();
+            try {
+                com.example.foodnote.backend.models.appEngineUserApi.model.AppEngineUser appEngineUser = appEngineUserApi.getUser().execute();
+                ActionStateSingleton.getInstance().setAppEngineUserId(appEngineUser.getUser().getUserId());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        public void onPostExecute(Void param) {
+            mProgressDialog.dismiss();
+            sharedPreferences.edit()
+                    .putString(Constants.APP_ENGINE_USER_ID,
+                            ActionStateSingleton.getInstance().getAppEngineUserId())
+                    .apply();
+            finish();
         }
     }
 }

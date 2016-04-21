@@ -1,5 +1,7 @@
 package com.example.foodnote.backend.models;
 
+import com.google.api.server.spi.config.AnnotationBoolean;
+import com.google.api.server.spi.config.ApiResourceProperty;
 import com.google.appengine.api.users.User;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.annotation.Entity;
@@ -18,6 +20,7 @@ public class AppEngineUser {
     public User getUser() {
         return user;
     }
+    @ApiResourceProperty(ignored = AnnotationBoolean.TRUE)
     public Key<AppEngineUser> getKey() {
         return Key.create(AppEngineUser.class, email);
     }
